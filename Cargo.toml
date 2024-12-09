@@ -1,0 +1,11 @@
+[package]
+name = "maestro-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+appium-client = "0.2.2"
+fantoccini = "0.19.3"
+serde = "1.0.215"
+serde_yaml = "0.9.34"
+tokio = "1.42.0"
