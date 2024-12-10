@@ -16,17 +16,21 @@ use tokio::time::{timeout, Duration};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct TestFile {
-    app_id: String,
-    tags: Vec<String>,
     steps: Vec<Step>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 enum Step {
-    AssertVisible { assert_visible: String },
-    TapOn { tap_on: String },
-    ScrollUntilVisible { scroll_until_visible: String },
+    AssertVisible { assert_visible: ElementProps },
+    TapOn { tap_on: ElementProps },
+    ScrollUntilVisible { scroll_until_visible: ElementProps },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ElementProps {
+    text: Option<String>,
+    xpath: Option<String>,
 }
 
 #[tokio::main]
@@ -42,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?}", test_file.steps);
     // Configure the Appium driver
     let mut caps = AndroidCapabilities::new_uiautomator();
-    caps.app("./maestro-rs/app/wikipedia.apk");
+    caps.app("./app/wikipedia.apk");
     caps.platform_version("13");
     //caps.app_wait_package("com.cencosud.parisapp.welcome.WelcomeActivity");
     caps.set_bool("appium:autoGrantPermissions", true);
@@ -84,16 +88,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for step in test_file.steps {
         match step {
             Step::AssertVisible { assert_visible } => {
-                println!("Asserting visible: {}", assert_visible);
-                assert!(assert_visible_element(client.clone(), &assert_visible).await);
+                let text = assert_visible.text.unwrap();
+                //let xpath = element.xpath.unwrap()
+
+                println!("Asserting visible: {}", text);
+                assert!(assert_visible_element(client.clone(), &text).await);
             }
             Step::TapOn { tap_on } => {
-                println!("Tapping on: {}", tap_on);
+                let text = tap_on.text.unwrap();
+                println!("Tapping on: {}", text);
                 let element = client
                     .appium_wait()
                     .for_element(By::uiautomator(&format!(
                         "new UiSelector().text(\"{}\");",
-                        tap_on
+                        text
                     )))
                     .await?;
                 element.click().await?;
@@ -101,7 +109,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Step::ScrollUntilVisible {
                 scroll_until_visible,
             } => {
-                println!("Scrolling until visible: {}", scroll_until_visible);
+                let text = scroll_until_visible.text.unwrap();
+                println!("Scrolling until visible: {}", text);
                 let swipe_down = TouchActions::new("finger".to_string())
                     .then(PointerAction::MoveTo {
                         duration: Some(Duration::from_millis(0)),
@@ -127,7 +136,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .clone()
                             .find_by(By::uiautomator(&format!(
                                 "new UiSelector().text(\"{}\");",
-                                scroll_until_visible
+                                text
                             )))
                             .await
                         {

@@ -1,12 +1,9 @@
-
-app_id: com.alibaba.intl.android.apps.poseidon
-tags:
-  - android
-  - passing
 steps:
-  - assert_visible: "CONTINUAR"
-  - tap_on: "SALTAR"
-  - scroll_until_visible: "Más artículos aleatorios"
-  - tap_on: "Más artículos aleatorios"
-  - assert_visible: "Aleatorio"
-
+  - assert_visible:
+      text: "CONTINUAR"
+  - tap_on:
+      text: "SALTAR"
+  - scroll_until_visible:
+      text: "COMPARTIR"
+  - tap_on:
+      text: "COMPARTIR"
