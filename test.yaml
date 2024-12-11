@@ -1,7 +1,8 @@
 capabilities:
   app_path: "./app/wikipedia.apk"
+  platform_version: "13"
   app_wait_package: "org.wikipedia"
-  app_wait_activity: "org.wikipedia.onboearding.InitialOnboardingActivity"
+  app_wait_activity: "org.wikipedia.onboarding.InitialOnboardingActivity"
   full_reset: true
   custom_cap:
     - key: "appium:autoGrantPermissions"

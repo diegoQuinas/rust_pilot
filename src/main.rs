@@ -6,12 +6,13 @@ use appium_client::{
     wait::AppiumWait,
     ClientBuilder,
 };
-use fantoccini::{
-    actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON_LEFT},
-    Client,
-};
+use fantoccini::actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON_LEFT};
 use serde::{Deserialize, Serialize};
-use std::{fs::File, io::Read};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    time::Instant,
+};
 use tokio::time::{timeout, Duration};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,6 +27,7 @@ struct TestCapabilities {
     app_wait_package: String,
     app_wait_activity: String,
     full_reset: bool,
+    platform_version: String,
     custom_cap: Vec<CustomCapability>,
 }
 
@@ -100,18 +102,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app_path = test_file.capabilities.app_path.clone();
     caps.app(&app_path);
 
-    caps.platform_version("13");
-    caps.app_wait_package("org.wikipedia");
-    caps.app_wait_activity("org.wikipedia.onboarding.InitialOnboardingActivity");
-    caps.full_reset(true);
+    caps.platform_version(&test_file.capabilities.platform_version);
+    caps.app_wait_package(&test_file.capabilities.app_wait_package);
+    caps.app_wait_activity(&test_file.capabilities.app_wait_activity);
+    caps.full_reset(test_file.capabilities.full_reset);
 
     set_custom_capabilities(&mut caps, &test_file);
 
-    println!("Launching app");
+    println!("Launching app {}", test_file.capabilities.app_path);
     let client = ClientBuilder::native(caps)
         .connect("http://localhost:4723/")
         .await?;
+    println!("Launched!");
 
+    let start = Instant::now();
+    let mut steps_count = 0;
     // Let's calculate some things first
     let (width, height) = client.get_window_size().await?;
 
@@ -134,11 +139,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                     let is_visible = element.is_displayed().await.unwrap();
                     assert!(is_visible);
+                    println!("Visible!");
+                    steps_count += 1;
                 }
                 Action::TapOn => {
                     println!("Tapping on: {:?}", step.selector);
                     let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                     element.click().await.expect("Couldn't click on element");
+                    println!("Tapped!");
+                    steps_count += 1;
                 }
                 Action::ScrollUntilVisible => {
                     println!("Scrolling until finding: {:?}", step.selector);
@@ -166,6 +175,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             if let Ok(_) = client.clone().find_by(by.clone()).await {
                                 println!("Founded!");
                                 visible = true;
+                                steps_count += 1;
                             } else {
                                 println!("Performing scroll");
                                 client.perform_actions(swipe_down.clone()).await.unwrap();
@@ -177,5 +187,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+    let time = start.elapsed();
+    println!("Test suite runned successfully");
+    println!("    Actions executed: {}", steps_count);
+    println!("    Total time elapsed: {:.2}", time.as_secs_f64());
+
     Ok(())
 }
