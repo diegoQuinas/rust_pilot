@@ -1,9 +1,22 @@
+capabilities:
+  app_path: "./app/wikipedia.apk"
+  app_wait_package: "org.wikipedia"
+  app_wait_activity: "org.wikipedia.onboearding.InitialOnboardingActivity"
+  full_reset: true
+  custom_cap:
+    - key: "appium:autoGrantPermissions"
+      value: true 
 steps:
-  - assert_visible:
+  - selector: 
       text: "CONTINUAR"
-  - tap_on:
+    actions:
+      - assert_visible
+  - selector: 
       text: "SALTAR"
-  - scroll_until_visible:
+    actions:
+      - tap_on
+  - selector:
       text: "COMPARTIR"
-  - tap_on:
-      text: "COMPARTIR"
+    actions:
+      - scroll_until_visible
+      - tap_on

@@ -16,23 +16,74 @@ use tokio::time::{timeout, Duration};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct TestFile {
+    capabilities: TestCapabilities,
     steps: Vec<Step>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct TestCapabilities {
+    app_path: String,
+    app_wait_package: String,
+    app_wait_activity: String,
+    full_reset: bool,
+    custom_cap: Vec<CustomCapability>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct CustomCapability {
+    key: String,
+    value: CustomCapabilityValue,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-enum Step {
-    AssertVisible { assert_visible: ElementProps },
-    TapOn { tap_on: ElementProps },
-    ScrollUntilVisible { scroll_until_visible: ElementProps },
+enum CustomCapabilityValue {
+    BooleanValue(bool),
+    StringValue(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ElementProps {
-    text: Option<String>,
-    xpath: Option<String>,
+struct Step {
+    selector: ElementSelector,
+    actions: Vec<Action>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum Action {
+    AssertVisible,
+    TapOn,
+    ScrollUntilVisible,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+enum ElementSelector {
+    TextSelector { text: String },
+    XpathSelector { xpath: String },
+}
+
+fn set_custom_capabilities(caps: &mut AndroidCapabilities, test_file: &TestFile) {
+    for custom_capability in test_file.capabilities.custom_cap.clone() {
+        match custom_capability.value {
+            CustomCapabilityValue::BooleanValue(value) => {
+                caps.set_bool(&custom_capability.key, value)
+            }
+            CustomCapabilityValue::StringValue(value) => {
+                caps.set_str(&custom_capability.key, &value)
+            }
+        }
+    }
+}
+
+pub fn get_element_by(selector: ElementSelector) -> By {
+    match selector {
+        ElementSelector::XpathSelector { xpath } => By::xpath(&xpath),
+        ElementSelector::TextSelector { text } => {
+            By::uiautomator(&format!("new UiSelector().text(\"{}\");", text))
+        }
+    }
+}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load the YAML file
@@ -43,17 +94,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Deserialize the YAML into our TestFile struct
     let test_file: TestFile = serde_yaml::from_str(&contents)?;
 
-    println!("{:?}", test_file.steps);
     // Configure the Appium driver
     let mut caps = AndroidCapabilities::new_uiautomator();
-    caps.app("./app/wikipedia.apk");
+
+    let app_path = test_file.capabilities.app_path.clone();
+    caps.app(&app_path);
+
     caps.platform_version("13");
-    //caps.app_wait_package("com.cencosud.parisapp.welcome.WelcomeActivity");
-    caps.set_bool("appium:autoGrantPermissions", true);
     caps.app_wait_package("org.wikipedia");
     caps.app_wait_activity("org.wikipedia.onboarding.InitialOnboardingActivity");
     caps.full_reset(true);
-    //caps.app_package(&test_file.app_id);
+
+    set_custom_capabilities(&mut caps, &test_file);
 
     println!("Launching app");
     let client = ClientBuilder::native(caps)
@@ -73,85 +125,57 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Process each step in the test file
     //
 
-    async fn assert_visible_element(client: Client, text: &str) -> bool {
-        let element = client
-            .appium_wait()
-            .for_element(By::uiautomator(&format!(
-                "new UiSelector().text(\"{}\");",
-                text
-            )))
-            .await
-            .unwrap();
-        element.is_displayed().await.unwrap()
-    }
-
     for step in test_file.steps {
-        match step {
-            Step::AssertVisible { assert_visible } => {
-                let text = assert_visible.text.unwrap();
-                //let xpath = element.xpath.unwrap()
+        let by = get_element_by(step.selector.clone());
+        for action in step.actions {
+            match action {
+                Action::AssertVisible => {
+                    println!("Asserting visible: {:?}", step.selector);
+                    let element = client.appium_wait().for_element(by.clone()).await.unwrap();
+                    let is_visible = element.is_displayed().await.unwrap();
+                    assert!(is_visible);
+                }
+                Action::TapOn => {
+                    println!("Tapping on: {:?}", step.selector);
+                    let element = client.appium_wait().for_element(by.clone()).await.unwrap();
+                    element.click().await.expect("Couldn't click on element");
+                }
+                Action::ScrollUntilVisible => {
+                    println!("Scrolling until finding: {:?}", step.selector);
+                    let swipe_down = TouchActions::new("finger".to_string())
+                        .then(PointerAction::MoveTo {
+                            duration: Some(Duration::from_millis(0)),
+                            x: horizontal_center,
+                            y: almost_bottom,
+                        })
+                        .then(PointerAction::Down {
+                            button: MOUSE_BUTTON_LEFT,
+                        })
+                        .then(PointerAction::MoveTo {
+                            duration: Some(Duration::from_millis(250)),
+                            x: horizontal_center,
+                            y: almost_top,
+                        });
 
-                println!("Asserting visible: {}", text);
-                assert!(assert_visible_element(client.clone(), &text).await);
-            }
-            Step::TapOn { tap_on } => {
-                let text = tap_on.text.unwrap();
-                println!("Tapping on: {}", text);
-                let element = client
-                    .appium_wait()
-                    .for_element(By::uiautomator(&format!(
-                        "new UiSelector().text(\"{}\");",
-                        text
-                    )))
-                    .await?;
-                element.click().await?;
-            }
-            Step::ScrollUntilVisible {
-                scroll_until_visible,
-            } => {
-                let text = scroll_until_visible.text.unwrap();
-                println!("Scrolling until visible: {}", text);
-                let swipe_down = TouchActions::new("finger".to_string())
-                    .then(PointerAction::MoveTo {
-                        duration: Some(Duration::from_millis(0)),
-                        x: horizontal_center,
-                        y: almost_bottom,
-                    })
-                    .then(PointerAction::Down {
-                        button: MOUSE_BUTTON_LEFT,
-                    })
-                    .then(PointerAction::MoveTo {
-                        duration: Some(Duration::from_millis(250)),
-                        x: horizontal_center,
-                        y: almost_top,
-                    });
+                    let timeout_duration = Duration::from_secs(30);
 
-                let timeout_duration = Duration::from_secs(30);
+                    let mut visible = false;
 
-                let mut visible = false;
-
-                let _ = timeout(timeout_duration, async {
-                    while !visible {
-                        if let Ok(_) = client
-                            .clone()
-                            .find_by(By::uiautomator(&format!(
-                                "new UiSelector().text(\"{}\");",
-                                text
-                            )))
-                            .await
-                        {
-                            println!("Founded!");
-                            visible = true;
-                        } else {
-                            println!("Performing scroll");
-                            client.perform_actions(swipe_down.clone()).await.unwrap();
+                    let _ = timeout(timeout_duration, async {
+                        while !visible {
+                            if let Ok(_) = client.clone().find_by(by.clone()).await {
+                                println!("Founded!");
+                                visible = true;
+                            } else {
+                                println!("Performing scroll");
+                                client.perform_actions(swipe_down.clone()).await.unwrap();
+                            }
                         }
-                    }
-                })
-                .await;
+                    })
+                    .await;
+                }
             }
         }
     }
-
     Ok(())
 }
