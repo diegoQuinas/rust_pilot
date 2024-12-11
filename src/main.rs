@@ -9,6 +9,7 @@ use appium_client::{
 use fantoccini::actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON_LEFT};
 use serde::{Deserialize, Serialize};
 use std::{
+    env,
     fs::File,
     io::{Read, Write},
     time::Instant,
@@ -88,8 +89,20 @@ pub fn get_element_by(selector: ElementSelector) -> By {
 }
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Obtener los argumentos de la línea de comandos
+    let args: Vec<String> = env::args().collect();
+
+    // Verificar si el archivo fue pasado como argumento
+    if args.len() < 2 {
+        println!("File path needed as argument");
+        return Ok(());
+    }
+
+    let file_path = &args[1];
+
+    println!("Test file path: {}", file_path);
     // Load the YAML file
-    let mut file = File::open("test.yaml")?;
+    let mut file = File::open(file_path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
