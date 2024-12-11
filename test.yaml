@@ -10,16 +10,18 @@ capabilities:
     - key: "appium:autoGrantPermissions"
       value: true
 steps:
-  - selector:
-      text: "CONTINUAR"
-    actions:
-      - assert_visible
-  - selector:
-      text: "SALTAR"
-    actions:
-      - tap_on
-  - selector:
-      text: "COMPARTIR"
-    actions:
-      - scroll_until_visible
-      - tap_on
+  page:
+    - selector:
+        text: "CONTINUAR"
+      actions:
+        - assert_visible
+    - selector:
+        text: "SALTAR"
+      actions:
+        - assert_visible
+        - tap_on
+    - selector:
+        text: "COMPARTIR"
+      actions:
+        - scroll_until_visible
+        - tap_on

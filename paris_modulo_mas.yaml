@@ -1,161 +1,163 @@
-capabilities:
-  app_path: ./app/ParisApp.apk
-  full_reset: true
-  platform_version: '13'
-  custom_cap:
-  - key: appium:autoGrantPermissions
-    value: true
-  - key: appium:appWaitPackage
-    value: com.cencosud.parisapp.welcome.WelcomeActivity
-  - key: appium:appPackage
-    value: com.cencosud.parisapp.android
-  - key: appium:appActivity
-    value: .di.Default
-steps:
-- selector:
-    text: Te damos la bienvenida a Paris
-  actions:
-  - assert_visible
-- selector:
-    text: Accede a una experiencia personalizada
-  actions:
-  - assert_visible
-- selector:
-    text: Iniciar sesión
-  actions:
-  - assert_visible
-- selector:
-    text: Crea una cuenta
-  actions:
-  - assert_visible
-- selector:
-    text: ¿Necesitas ayuda para ingresar?
-  actions:
-  - assert_visible
-- selector:
-    text: Te damos la bienvenida a Paris
-  actions:
-  - assert_visible
-- selector:
-    text: Accede a una experiencia personalizada
-  actions:
-  - assert_visible
-- selector:
-    text: Iniciar sesión
-  actions:
-  - assert_visible
-- selector:
-    text: Crea una cuenta
-  actions:
-  - assert_visible
-- selector:
-    text: ¿Necesitas ayuda para ingresar?
-  actions:
-  - assert_visible
-- selector:
-    class_name: android.widget.Button
-    instance: 0
-  actions:
-  - tap_on
-- selector:
-    text: Ingresa tu ubicación
-  actions:
-  - assert_visible
-- selector:
-    text: ¿Qué estás buscando?
-  actions:
-  - assert_visible
-- selector:
-    text: Algo salió mal
-  actions:
-  - assert_visible
-- selector:
-    text: Tenemos problemas para mostrar la información. Por favor, intenta de nuevo más tarde.
-  actions:
-  - assert_visible
-- selector:
-    text: Inicio
-  actions:
-  - assert_visible
-- selector:
-    text: Categorías
-  actions:
-  - assert_visible
-- selector:
-    text: Mi cuenta
-  actions:
-  - assert_visible
-- selector:
-    text: Favoritos
-  actions:
-  - assert_visible
-- selector:
-    text: Más
-  actions:
-  - assert_visible
-  - tap_on
-- selector:
-    text: Mejora tu experiencia iniciando sesión o ¡crea una cuenta ya!
-  actions:
-  - assert_visible
-- selector:
-    text: Iniciar sesión
-  actions:
-  - assert_visible
-- selector:
-    text: Crear cuenta
-  actions:
-  - assert_visible
-- selector:
-    text: Centro de ayuda
-  actions:
-  - assert_visible
-- selector:
-    text: Tarjeta Cencosud Scotiabank
-  actions:
-  - assert_visible
-- selector:
-    text: Tiendas Paris
-  actions:
-  - assert_visible
-- selector:
-    text: Tu opinión sobre la app
-  actions:
-  - assert_visible
-- selector:
-    text: Informaciones legales
-  actions:
-  - assert_visible
-- selector:
-    text: Versión 3.0.10
-  actions:
-  - assert_visible
-- selector:
-    text: Tarjeta Cencosud Scotiabank
-  actions:
-  - assert_visible
-  - tap_on
-- selector:
-    text: Tarjeta Cencosud Scotiabank
-  actions:
-  - assert_visible
-- selector:
-    text: Solicita tu Tarjeta
-  actions:
-  - assert_visible
-- selector:
-    text: Paga tu Tarjeta
-  actions:
-  - assert_visible
-- selector:
-    text: Simula un Avance
-  actions:
-  - assert_visible
-- selector:
-    text: Simula un Súper Avance
-  actions:
-  - assert_visible
-- selector:
-    text: Paga tu Crédito de Consumo
-  actions:
-  - assert_visible
+platform:
+  !android
+  capabilities:
+    app_path: ./app/ParisApp.apk
+    full_reset: true
+    platform_version: '13'
+    custom_caps:
+    - key: appium:autoGrantPermissions
+      value: true
+    - key: appium:appWaitPackage
+      value: com.cencosud.parisapp.welcome.WelcomeActivity
+    - key: appium:appPackage
+      value: com.cencosud.parisapp.android
+    - key: appium:appActivity
+      value: .di.Default
+  steps:
+  - selector:
+      text: Te damos la bienvenida a Paris
+    actions:
+    - assert_visible
+  - selector:
+      text: Accede a una experiencia personalizada
+    actions:
+    - assert_visible
+  - selector:
+      text: Iniciar sesión
+    actions:
+    - assert_visible
+  - selector:
+      text: Crea una cuenta
+    actions:
+    - assert_visible
+  - selector:
+      text: ¿Necesitas ayuda para ingresar?
+    actions:
+    - assert_visible
+  - selector:
+      text: Te damos la bienvenida a Paris
+    actions:
+    - assert_visible
+  - selector:
+      text: Accede a una experiencia personalizada
+    actions:
+    - assert_visible
+  - selector:
+      text: Iniciar sesión
+    actions:
+    - assert_visible
+  - selector:
+      text: Crea una cuenta
+    actions:
+    - assert_visible
+  - selector:
+      text: ¿Necesitas ayuda para ingresar?
+    actions:
+    - assert_visible
+  - selector:
+      class_name: android.widget.Button
+      instance: 0
+    actions:
+    - tap_on
+  - selector:
+      text: Ingresa tu ubicación
+    actions:
+    - assert_visible
+  - selector:
+      text: ¿Qué estás buscando?
+    actions:
+    - assert_visible
+  - selector:
+      text: Algo salió mal
+    actions:
+    - assert_visible
+  - selector:
+      text: Tenemos problemas para mostrar la información. Por favor, intenta de nuevo más tarde.
+    actions:
+    - assert_visible
+  - selector:
+      text: Inicio
+    actions:
+    - assert_visible
+  - selector:
+      text: Categorías
+    actions:
+    - assert_visible
+  - selector:
+      text: Mi cuenta
+    actions:
+    - assert_visible
+  - selector:
+      text: Favoritos
+    actions:
+    - assert_visible
+  - selector:
+      text: Más
+    actions:
+    - assert_visible
+    - tap_on
+  - selector:
+      text: Mejora tu experiencia iniciando sesión o ¡crea una cuenta ya!
+    actions:
+    - assert_visible
+  - selector:
+      text: Iniciar sesión
+    actions:
+    - assert_visible
+  - selector:
+      text: Crear cuenta
+    actions:
+    - assert_visible
+  - selector:
+      text: Centro de ayuda
+    actions:
+    - assert_visible
+  - selector:
+      text: Tarjeta Cencosud Scotiabank
+    actions:
+    - assert_visible
+  - selector:
+      text: Tiendas Paris
+    actions:
+    - assert_visible
+  - selector:
+      text: Tu opinión sobre la app
+    actions:
+    - assert_visible
+  - selector:
+      text: Informaciones legales
+    actions:
+    - assert_visible
+  - selector:
+      text: Versión 3.0.10
+    actions:
+    - assert_visible
+  - selector:
+      text: Tarjeta Cencosud Scotiabank
+    actions:
+    - assert_visible
+    - tap_on
+  - selector:
+      text: Tarjeta Cencosud Scotiabank
+    actions:
+    - assert_visible
+  - selector:
+      text: Solicita tu Tarjeta
+    actions:
+    - assert_visible
+  - selector:
+      text: Paga tu Tarjeta
+    actions:
+    - assert_visible
+  - selector:
+      text: Simula un Avance
+    actions:
+    - assert_visible
+  - selector:
+      text: Simula un Súper Avance
+    actions:
+    - assert_visible
+  - selector:
+      text: Paga tu Crédito de Consumo
+    actions:
+    - assert_visible
