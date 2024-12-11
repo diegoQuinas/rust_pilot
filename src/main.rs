@@ -8,12 +8,7 @@ use appium_client::{
 };
 use fantoccini::actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON_LEFT};
 use serde::{Deserialize, Serialize};
-use std::{
-    env,
-    fs::File,
-    io::{Read, Write},
-    time::Instant,
-};
+use std::{env, fs::File, io::Read, time::Instant};
 use tokio::time::{timeout, Duration};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,8 +20,6 @@ struct TestFile {
 #[derive(Debug, Serialize, Deserialize)]
 struct TestCapabilities {
     app_path: String,
-    app_wait_package: String,
-    app_wait_activity: String,
     full_reset: bool,
     platform_version: String,
     custom_cap: Vec<CustomCapability>,
@@ -57,13 +50,22 @@ enum Action {
     AssertVisible,
     TapOn,
     ScrollUntilVisible,
+    InsertData { data: String },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 enum ElementSelector {
-    TextSelector { text: String },
-    XpathSelector { xpath: String },
+    Text {
+        text: String,
+    },
+    Xpath {
+        xpath: String,
+    },
+    ClassName {
+        class_name: String,
+        instance: Option<i32>,
+    },
 }
 
 fn set_custom_capabilities(caps: &mut AndroidCapabilities, test_file: &TestFile) {
@@ -79,14 +81,28 @@ fn set_custom_capabilities(caps: &mut AndroidCapabilities, test_file: &TestFile)
     }
 }
 
-pub fn get_element_by(selector: ElementSelector) -> By {
+fn get_element_by(selector: ElementSelector) -> By {
     match selector {
-        ElementSelector::XpathSelector { xpath } => By::xpath(&xpath),
-        ElementSelector::TextSelector { text } => {
+        ElementSelector::Xpath { xpath } => By::xpath(&xpath),
+        ElementSelector::Text { text } => {
             By::uiautomator(&format!("new UiSelector().text(\"{}\");", text))
+        }
+        ElementSelector::ClassName {
+            class_name,
+            instance,
+        } => {
+            if let Some(instance) = instance {
+                By::uiautomator(&format!(
+                    "new UiSelector().className({}).instance({})",
+                    class_name, instance
+                ))
+            } else {
+                By::uiautomator(&format!("new UiSelector().className({})", class_name))
+            }
         }
     }
 }
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Obtener los argumentos de la línea de comandos
@@ -116,8 +132,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     caps.app(&app_path);
 
     caps.platform_version(&test_file.capabilities.platform_version);
-    caps.app_wait_package(&test_file.capabilities.app_wait_package);
-    caps.app_wait_activity(&test_file.capabilities.app_wait_activity);
     caps.full_reset(test_file.capabilities.full_reset);
 
     set_custom_capabilities(&mut caps, &test_file);
@@ -161,6 +175,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     element.click().await.expect("Couldn't click on element");
                     println!("Tapped!");
                     steps_count += 1;
+                }
+                Action::InsertData { data } => {
+                    println!("Inserting {} in field {:?}", data, step.selector)
                 }
                 Action::ScrollUntilVisible => {
                     println!("Scrolling until finding: {:?}", step.selector);

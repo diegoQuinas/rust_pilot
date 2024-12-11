@@ -1,0 +1,29 @@
+
+capabilities:
+  app_path: "./app/ParisApp.apk"
+  platform_version: "13"
+  full_reset: true
+  custom_cap:
+    - key: "appium:autoGrantPermissions"
+      value: true 
+    - key: "appium:appWaitPackage"
+      value: "com.cencosud.parisapp.welcome.WelcomeActivity"
+    - key: "appium:appPackage"
+      value: "com.cencosud.parisapp.android"
+    - key: "appium:appActivity"
+      value: ".di.Default"
+steps:
+  - selector: 
+      text: "Crea una cuenta"
+    actions:
+      - assert_visible
+  - selector:
+      class_name: "android.widget.Button"
+      instance: 0
+    actions:
+      - tap_on
+  - selector:
+      text: "Más"
+    actions:
+      - tap_on
+
