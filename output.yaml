@@ -1,0 +1,34 @@
+capabilities:
+  app_path: ./app/ParisApp.apk
+  full_reset: true
+  platform_version: '13'
+  custom_cap:
+  - key: appium:autoGrantPermissions
+    value: true
+  - key: appium:appWaitPackage
+    value: com.cencosud.parisapp.welcome.WelcomeActivity
+  - key: appium:appPackage
+    value: com.cencosud.parisapp.android
+  - key: appium:appActivity
+    value: .di.Default
+steps:
+- selector:
+    text: Te damos la bienvenida a Paris
+  actions:
+  - assert_visible
+- selector:
+    text: Accede a una experiencia personalizada
+  actions:
+  - assert_visible
+- selector:
+    text: Iniciar sesión
+  actions:
+  - assert_visible
+- selector:
+    text: Crea una cuenta
+  actions:
+  - assert_visible
+- selector:
+    text: ¿Necesitas ayuda para ingresar?
+  actions:
+  - assert_visible
