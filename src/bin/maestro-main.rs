@@ -34,6 +34,8 @@ enum Platform {
 struct IosCaps {
     app_path: String,
     custom_caps: Option<Vec<CustomCapability>>,
+    device_name: String,
+    platform_version: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -228,7 +230,6 @@ async fn launch_android_main(
     caps.full_reset(capabilities.full_reset);
 
     if let Some(custom_caps) = capabilities.custom_caps {
-        println!("{:?}", custom_caps);
         set_custom_capabilities_android(&mut caps, custom_caps.clone());
     };
 
@@ -334,6 +335,10 @@ async fn launch_ios_main(
 
     let app_path = capabilities.app_path.clone();
     caps.app(&app_path);
+
+    caps.device_name(&capabilities.device_name);
+    caps.platform_version(&capabilities.platform_version);
+    caps.automation_name("XCUITest");
 
     if let Some(custom_caps) = capabilities.custom_caps {
         set_custom_capabilities_ios(&mut caps, custom_caps)
