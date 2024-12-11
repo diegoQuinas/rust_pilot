@@ -136,7 +136,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     set_custom_capabilities(&mut caps, &test_file);
 
     fn start_spinner(message: String) -> Spinner {
-        Spinner::new(spinners::Spinners::Arrow, message)
+        Spinner::new(spinners::Spinners::Dots, message)
     }
 
     fn stop_spinner(spinner: &mut Spinner) {
@@ -148,7 +148,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = ClientBuilder::native(caps)
         .connect("http://localhost:4723/")
         .await?;
-    spinner.stop_with_symbol("\x1b[32m🗸\x1b[0m");
+    spinner.stop_with_symbol("[LAUNCHED]");
 
     let start = Instant::now();
     let mut steps_count = 0;
@@ -233,7 +233,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let time = start.elapsed();
     println!("\n\nTest suite runned successfully");
     println!("    Actions executed: {}", steps_count);
-    println!("    Total time elapsed: {:.2}", time.as_secs_f64());
+    println!("    Total time elapsed: {:.2} seconds", time.as_secs_f64());
 
     Ok(())
 }
