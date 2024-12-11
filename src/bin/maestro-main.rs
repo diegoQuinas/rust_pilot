@@ -177,7 +177,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     steps_count += 1;
                 }
                 Action::InsertData { data } => {
-                    println!("Inserting {} in field {:?}", data, step.selector)
+                    println!("Inserting {} in field {:?}", data, step.selector);
+                    let element = client.appium_wait().for_element(by.clone()).await.unwrap();
+                    element.send_keys(&data).await.unwrap();
                 }
                 Action::ScrollUntilVisible => {
                     println!("Scrolling until finding: {:?}", step.selector);
