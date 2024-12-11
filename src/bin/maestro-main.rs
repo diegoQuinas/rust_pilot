@@ -1,7 +1,5 @@
 use appium_client::{
-    capabilities::{
-        android::AndroidCapabilities, AppCapable, AppiumCapability, UiAutomator2AppCompatible,
-    },
+    capabilities::{android::AndroidCapabilities, AppCapable, AppiumCapability},
     find::{AppiumFind, By},
     wait::AppiumWait,
     ClientBuilder,
