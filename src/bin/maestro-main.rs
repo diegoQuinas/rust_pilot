@@ -6,6 +6,7 @@ use appium_client::{
 };
 use fantoccini::actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON_LEFT};
 use serde::{Deserialize, Serialize};
+use spinners::Spinner;
 use std::{env, fs::File, io::Read, time::Instant};
 use tokio::time::{timeout, Duration};
 
@@ -134,11 +135,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     set_custom_capabilities(&mut caps, &test_file);
 
-    println!("Launching app {}", test_file.capabilities.app_path);
+    fn start_spinner(message: String) -> Spinner {
+        Spinner::new(spinners::Spinners::Arrow, message)
+    }
+
+    fn stop_spinner(spinner: &mut Spinner) {
+        spinner.stop_with_symbol("\x1b[32m[OK]\x1b[0m")
+    }
+
+    println!("App path: {}", test_file.capabilities.app_path);
+    let mut spinner = Spinner::new(spinners::Spinners::Arrow, "Launching app".to_string());
     let client = ClientBuilder::native(caps)
         .connect("http://localhost:4723/")
         .await?;
-    println!("Launched!");
+    spinner.stop_with_symbol("\x1b[32m🗸\x1b[0m");
 
     let start = Instant::now();
     let mut steps_count = 0;
@@ -160,27 +170,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for action in step.actions {
             match action {
                 Action::AssertVisible => {
-                    println!("Asserting visible: {:?}", step.selector);
+                    let mut sp = start_spinner(format!("Asserting visible: {:?}", step.selector));
                     let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                     let is_visible = element.is_displayed().await.unwrap();
                     assert!(is_visible);
-                    println!("Visible!");
                     steps_count += 1;
+                    stop_spinner(&mut sp)
                 }
                 Action::TapOn => {
-                    println!("Tapping on: {:?}", step.selector);
+                    let mut sp = start_spinner(format!("Tapping on: {:?}", step.selector));
                     let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                     element.click().await.expect("Couldn't click on element");
-                    println!("Tapped!");
                     steps_count += 1;
+                    stop_spinner(&mut sp)
                 }
                 Action::InsertData { data } => {
-                    println!("Inserting {} in field {:?}", data, step.selector);
+                    let mut sp =
+                        start_spinner(format!("Inserting {} in field {:?}", data, step.selector));
                     let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                     element.send_keys(&data).await.unwrap();
+                    stop_spinner(&mut sp)
                 }
                 Action::ScrollUntilVisible => {
-                    println!("Scrolling until finding: {:?}", step.selector);
+                    let mut sp =
+                        start_spinner(format!("Scrolling until finding: {:?}", step.selector));
                     let swipe_down = TouchActions::new("finger".to_string())
                         .then(PointerAction::MoveTo {
                             duration: Some(Duration::from_millis(0)),
@@ -203,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let _ = timeout(timeout_duration, async {
                         while !visible {
                             if let Ok(_) = client.clone().find_by(by.clone()).await {
-                                println!("Founded!");
+                                stop_spinner(&mut sp);
                                 visible = true;
                                 steps_count += 1;
                             } else {
@@ -218,7 +231,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     let time = start.elapsed();
-    println!("Test suite runned successfully");
+    println!("\n\nTest suite runned successfully");
     println!("    Actions executed: {}", steps_count);
     println!("    Total time elapsed: {:.2}", time.as_secs_f64());
 
