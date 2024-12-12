@@ -24,8 +24,5 @@ platform:
         instance: 0
       actions:
         - tap_on
-    - selector:
-        text: "Más"
-      actions:
-        - tap_on
+    - step_file: "./prueba.steps.yaml"
 

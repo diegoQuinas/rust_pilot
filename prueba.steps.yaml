@@ -1,0 +1,7 @@
+steps:
+  - selector:
+      text: "Más"
+    actions:
+      - tap_on
+  - log: "Hola"
+  - take_screenshot: "./screeny.png"
