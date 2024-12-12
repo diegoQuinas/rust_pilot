@@ -48,6 +48,9 @@ pub enum AndroidNormalStep {
     LogStep {
         log: String,
     },
+    Pause {
+        pause: u64,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -57,7 +60,7 @@ pub enum AndroidAction {
     TapOn,
     ScrollUntilVisible,
     InsertData { data: String },
-    Pause { duration: u64 },
+    Pause(u64),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -76,8 +79,8 @@ pub enum AndroidElementSelector {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct StepFile {
-    pub steps: Vec<AndroidStep>,
+struct StepFile {
+    steps: Vec<AndroidStep>,
 }
 
 pub async fn android_transform_into_actions(steps: Vec<AndroidStep>) -> Vec<AndroidNormalStep> {
@@ -193,7 +196,7 @@ pub async fn launch_android_main(
                 let by = get_android_element_by(selector.clone());
                 for action in actions {
                     match action {
-                        AndroidAction::Pause { duration } => {
+                        AndroidAction::Pause(duration) => {
                             pause_action(duration).await;
                         }
                         AndroidAction::AssertVisible => {
@@ -272,6 +275,9 @@ pub async fn launch_android_main(
             }
             AndroidNormalStep::LogStep { log } => {
                 println!("[LOG] {}", log);
+            }
+            AndroidNormalStep::Pause { pause } => {
+                pause_action(pause).await;
             }
         }
     }

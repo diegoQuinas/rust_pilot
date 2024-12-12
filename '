@@ -43,7 +43,7 @@ pub enum IosAction {
     TapOn,
     ScrollUntilVisible,
     InsertData { data: String },
-    Pause(u64),
+    Pause { duration: u64 },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -179,7 +179,7 @@ pub async fn ios_perform_actions(
     let mut steps_count: i32 = 0;
     for action in actions {
         match action {
-            IosAction::Pause(duration) => {
+            IosAction::Pause { duration } => {
                 pause_action(duration).await;
             }
             IosAction::AssertVisible => {
