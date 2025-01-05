@@ -1,0 +1,25 @@
+platform: "android"
+app_path: "./app/wikipedia.apk"
+platform_version: "13"
+automation_name: "UiAutomator2"
+full_reset: true
+
+custom_cap:
+  - key: appium:appWaitActivity
+    value: org.wikipedia.org.wikipedia.main.MainActivity,org.wikipedia.onboarding.InitialOnboardingActivity
+  - key: appium:appWaitPackage
+    value: org.wikipedia
+
+
+  - key: appium:autoGrantPermissions
+    value: true
+  - key: appium:ensureWebviewsHavePages
+    value: true
+  - key: appium:skipServerInstallation
+    value: false
+  - key: appium:ignoreHiddenApiPolicyError
+    value: true
+  - key: appium:disableWindowAnimation
+    value: true
+  - key: appium:newCommandTimeout
+    value: 300

@@ -1,0 +1,9 @@
+appId: org.wikipedia
+tags:
+  - android
+  - passing
+---
+- runFlow: "onboarding/main.yml"
+- runFlow: "dashboard/main.yml"
+- runFlow: "auth/signup.yml"
+- runFlow: "auth/login.yml"
