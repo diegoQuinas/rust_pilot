@@ -1,5 +1,8 @@
 use colored::Colorize;
 
+pub fn ok_tag() -> String {
+    "[OK]".green().to_string()
+}
 pub fn error_tag() -> String {
     "[ERR]".red().to_string()
 }

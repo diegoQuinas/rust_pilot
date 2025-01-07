@@ -1,4 +1,6 @@
 appId: org.wikipedia
+tags: 
+  - android
 ---
 - runFlow: "add-language.yml"
 - runFlow: "remove-language.yml"

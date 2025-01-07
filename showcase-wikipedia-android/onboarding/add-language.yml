@@ -1,10 +1,14 @@
 appId: org.wikipedia
+tags:
+  - android
+  - passing
 ---
-- tapOn: "ADD OR EDIT.*"
+- launchApp:
+    clearState: true
+- tapOn: "ADD OR EDIT LANGUAGES"
 - tapOn: "ADD LANGUAGE"
-- tapOn:
+- tapOn: 
     id: ".*menu_search_language"
 - inputText: "Greek"
 - assertVisible: "Ελληνικά"
 - tapOn: "Ελληνικά"
-- tapOn: "Navigate up"

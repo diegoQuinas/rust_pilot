@@ -1,7 +1,11 @@
 appId: org.wikipedia
+tags:
+  - android
+  - passing
 ---
-- tapOn: "ADD OR EDIT.*"
-- tapOn: "More options"
+#- tapOn: "ADD OR EDIT.*"
+- tapOn: 
+    id: ".*option.*"
 - tapOn: "Remove language"
 - tapOn:
     id: ".*wiki_language_checkbox"

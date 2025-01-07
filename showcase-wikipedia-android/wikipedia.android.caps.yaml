@@ -4,22 +4,14 @@ platform_version: "13"
 automation_name: "UiAutomator2"
 full_reset: true
 
-custom_cap:
+custom_caps:
   - key: appium:appWaitActivity
-    value: org.wikipedia.org.wikipedia.main.MainActivity,org.wikipedia.onboarding.InitialOnboardingActivity
-  - key: appium:appWaitPackage
+    value: "*"
+  - key: appium:appActivity
+    value: "org.wikipedia.main.MainActivity"
+  - key: appium:appPackage
     value: org.wikipedia
-
-
   - key: appium:autoGrantPermissions
     value: true
-  - key: appium:ensureWebviewsHavePages
-    value: true
   - key: appium:skipServerInstallation
-    value: false
-  - key: appium:ignoreHiddenApiPolicyError
     value: true
-  - key: appium:disableWindowAnimation
-    value: true
-  - key: appium:newCommandTimeout
-    value: 300
