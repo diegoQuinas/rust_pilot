@@ -78,6 +78,9 @@ pub enum AndroidElementSelector {
         id: String,
         index: u32,
     },
+    Description {
+        description: String,
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -107,6 +110,10 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
         AndroidElementSelector::Text { text } => {
             By::uiautomator(&format!("new UiSelector().textMatches(\"{}\");", text))
         }
+        AndroidElementSelector::Description { description } => By::uiautomator(&format!(
+            "new UiSelector().descriptionMatches(\"{}\");",
+            description
+        )),
         AndroidElementSelector::IdWithIndex { id, index } => By::uiautomator(&format!(
             "new UiSelector().resourceIdMatches(\"{}\").index({});",
             id, index
@@ -133,7 +140,7 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
 pub async fn launch_android_main(
     capabilities: CapsFile,
     steps: Vec<Step>,
-) -> Result<u32, Box<dyn std::error::Error>> {
+) -> Result<(u32, String), Box<dyn std::error::Error>> {
     // Configure the Appium driver
     let mut caps = AndroidCapabilities::new_uiautomator();
 
@@ -165,6 +172,6 @@ pub async fn launch_android_main(
         });
     spinner.stop_with_symbol("[LAUNCHED]");
 
-    let steps_count = execute_android_steps(&client, steps).await;
-    Ok(steps_count)
+    let (steps_count, report) = execute_android_steps(&client, steps).await;
+    Ok((steps_count, report))
 }

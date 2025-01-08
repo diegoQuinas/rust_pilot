@@ -1,0 +1,57 @@
+
+appId: org.wikipedia
+---
+- swipe:  
+    start: 50%, 80%
+    end: 50%, 1%
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 1% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 
+- swipe:  
+    start: 50%, 80% 
+    end: 50%, 0% 

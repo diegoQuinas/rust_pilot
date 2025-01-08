@@ -4,14 +4,13 @@ tags:
   - passing
 ---
 #- tapOn: "ADD OR EDIT.*"
-- tapOn: 
-    id: ".*option.*"
+- tapOn: "More options"
 - tapOn: "Remove language"
 - tapOn:
     id: ".*wiki_language_checkbox"
-    index: 1
+    index: 0
 - tapOn:
     id: ".*menu_delete_selected"
 - tapOn: "OK"
-- assertNotVisible: "Ελληνικά"
+- assertNotVisible: "English"
 - tapOn: "Navigate up"

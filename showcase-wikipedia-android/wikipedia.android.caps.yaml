@@ -1,6 +1,6 @@
 platform: "android"
 app_path: "./app/wikipedia.apk"
-platform_version: "13"
+platform_version: "9"
 automation_name: "UiAutomator2"
 full_reset: true
 

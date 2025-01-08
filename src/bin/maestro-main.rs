@@ -1,11 +1,31 @@
-use std::{env, fs::File, io::Read, path::Path, time::Instant};
+use std::{
+    env,
+    fs::{self, File},
+    io::{Read, Write},
+    path::Path,
+    time::Instant,
+};
 
+use chrono::Local;
 use colored::Colorize;
 use maestro_rs::{
     android::*,
     shared::*,
     tags::{error_tag, info_tag},
 };
+
+fn print_logo() {
+    let logo = r#"
+                                _                            
+                           | |                           
+  _ __ ___   __ _  ___  ___| |_ _ __ ___ ______ _ __ ___ 
+ | '_ ` _ \ / _` |/ _ \/ __| __| '__/ _ \______| '__/ __|
+ | | | | | | (_| |  __/\__ \ |_| | | (_) |     | |  \__ \
+ |_| |_| |_|\__,_|\___||___/\__|_|  \___/      |_|  |___/
+                                                         
+                                                         "#;
+    println!("{}", logo.yellow());
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,6 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
+    print_logo();
+
     let file_path = &args[1];
     let caps_path = &args[2];
 
@@ -32,7 +54,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parent()
         .expect("Failed to determine base path");
 
-    let flattened_steps = flatten_steps(steps, base_path).await;
+    let mermaid_base_id = format!("idRoot0({})", base_path.display());
+    let (flattened_steps, mermaid_steps) = flatten_steps(steps, base_path, mermaid_base_id).await;
 
     let mut caps_file = File::open(caps_path)?;
     let mut caps_contents = String::new();
@@ -41,20 +64,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let capabilities_file: CapsFile = serde_yaml::from_str(&caps_contents)?;
 
     let start = Instant::now();
-    let steps_count = match capabilities_file.platform {
+    let (steps_count, report) = match capabilities_file.platform {
         Platform::Ios => {
             /*launch_ios_main(capabilities, steps).await.unwrap()*/
-            0
+            (0, "### IOS NOT IMPLEMENTED".to_string())
         }
         Platform::Android => launch_android_main(capabilities_file, flattened_steps)
             .await
             .unwrap_or_else(|err| {
                 eprintln!("{} Error launching Android test: {}", error_tag(), err);
-                0
+                (
+                    0,
+                    format!("### ERROR LAUNCHING ANDROID TEST\n```{}```", err),
+                )
             }),
     };
+
     let time = start.elapsed();
+    let now = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let full_report = format!(
+        "# Test suite report\n\n![LOGO](./assets/logo.webp)\n\nTest file: {}\n\nPlatform: Android\n\n🕒 Date and time {}\n\n✅ Steps executed {} successfully\n\n{}",
+        file_path, now, steps_count, report
+    );
+    let report_name = format!("REPORT_{}.md", Local::now().format("%Y-%m%d_%H-%M-%S"));
+    if let Ok(mut report_file) = fs::File::create(&report_name) {
+        let _ = report_file.write_all(full_report.as_bytes());
+    } else {
+        eprintln!("{} Error creating report file", error_tag());
+    }
     println!("\n\nTest suite runned successfully");
+    println!("    Report file: {}", report_name);
     println!("    Actions executed: {}", steps_count);
     println!("    Total time elapsed: {:.2} seconds", time.as_secs_f64());
     Ok(())

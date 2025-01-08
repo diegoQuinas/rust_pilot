@@ -1,0 +1,6 @@
+appId: org.wikipedia
+---
+- manual:
+    testCase: "Text should be green"
+    screenshot: true
+    

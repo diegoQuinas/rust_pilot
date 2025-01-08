@@ -16,3 +16,9 @@ pub fn info_tag() -> String {
 pub fn warning_tag() -> String {
     "[WARN]".yellow().to_string()
 }
+pub fn valid_report_tag() -> String {
+    "✅ Ok".to_string()
+}
+pub fn invalid_report_tag() -> String {
+    "❌ Error".to_string()
+}

@@ -1,0 +1,13 @@
+appId: org.wikipedia
+---
+- tapOn: "Search"
+- assertVisible: "History"
+- tapOn: "Search Wikipedia"
+- inputText: "Cencosud"
+- tapOn: 
+    text: "cadena de supermercados.*"
+- tapOn: 
+    text: "América.*"
+- tapOn:
+    text: "LEER ARTÍCULO"
+

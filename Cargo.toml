@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 appium-client = "0.2.2"
+chrono = "0.4.39"
 colored = "2.2.0"
 fantoccini = "0.19.3"
 once_cell = "1.20.2"

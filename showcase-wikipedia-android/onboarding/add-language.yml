@@ -5,10 +5,16 @@ tags:
 ---
 - launchApp:
     clearState: true
-- tapOn: "ADD OR EDIT LANGUAGES"
+- tapOn: 
+    text: "ADD OR EDIT LANGUAGES"
 - tapOn: "ADD LANGUAGE"
 - tapOn: 
     id: ".*menu_search_language"
 - inputText: "Greek"
 - assertVisible: "Ελληνικά"
-- tapOn: "Ελληνικά"
+- tapOn: 
+    id: ".*search_close_btn"
+- tapOn: 
+    id: ".*search_src_text"
+- inputText: "Spanish"
+- tapOn: "Español"
