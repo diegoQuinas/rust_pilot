@@ -1,5 +1,5 @@
 ![RustPilotLogo](./assets/RustPilotLogo.png)
-![Build Status](https://github.com/<usuario>/<repositorio>/actions/workflows/rust.yml/badge.svg)
+![Build Status](https://github.com/diegoQuinas/RustPilot/actions/workflows/rust.yml/badge.svg)
 
 # RustPilot
 
