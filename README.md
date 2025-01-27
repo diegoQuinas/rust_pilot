@@ -1,5 +1,5 @@
-![[assets/RustPilotLogo.png]]
-![Build Status](https://github.com/<usuario>/<repositorio>/actions/workflows/ci.yml/badge.svg)
+![RustPilotLogo](./assets/RustPilotLogo.png)
+![Build Status](https://github.com/<usuario>/<repositorio>/actions/workflows/rust.yml/badge.svg)
 
 # RustPilot
 
@@ -11,7 +11,7 @@ And it's written in a very low level programming language making it very fast an
 
 This is the solution, as a automation engineer, and after severe years of pain and work have implemented, and I hope you enjoy using it as much as I do and feel completely free to contribute or add the features you think you need, or fork it and make your own implementations, or even use it with commercial purposes.
 
-![[./assets/Showreel.gif]]
+![gif](./assets/Showreel.gif)
 
 ### How it works
 
