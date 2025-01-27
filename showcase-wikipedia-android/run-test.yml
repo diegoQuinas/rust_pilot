@@ -5,4 +5,5 @@ tags:
 ---
 - launchApp:
     clearState: true
-- runFlow: "onboarding/main.yml"
+#- runFlow: "onboarding/main.yml"
+- runFlow: "onboarding/main-plain.yml"

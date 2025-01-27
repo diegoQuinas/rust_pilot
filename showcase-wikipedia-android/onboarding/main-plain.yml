@@ -1,0 +1,36 @@
+appId: org.wikipedia
+tags: 
+  - android
+---
+- launchApp:
+    clearState: true
+- tapOn: 
+    text: "ADD OR EDIT LANGUAGES"
+- tapOn: "ADD LANGUAGE"
+- tapOn: 
+    id: ".*menu_search_language"
+- inputText: "Greek"
+- assertVisible: "Ελληνικά"
+- tapOn: 
+    id: ".*search_close_btn"
+- tapOn: 
+    id: ".*search_src_text"
+- inputText: "Spanish"
+- tapOn: "Español"
+- tapOn: "More options"
+- tapOn: "Remove language"
+- tapOn:
+    id: ".*wiki_language_checkbox"
+    index: 0
+- tapOn:
+    id: ".*menu_delete_selected"
+- tapOn: "OK"
+- assertNotVisible: "English"
+- tapOn: "Navigate up"
+- tapOn: "CONTINUE"
+- assertVisible: "New ways to explore"
+- tapOn: "CONTINUE"
+- assertVisible: "Reading lists with sync"
+- tapOn: "CONTINUE"
+- assertVisible: "Send anonymous data"
+- tapOn: "GET STARTED"

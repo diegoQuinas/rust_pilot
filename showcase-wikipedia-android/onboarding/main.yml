@@ -11,6 +11,5 @@ tags:
 - tapOn: "CONTINUE"
 - assertVisible: "Send anonymous data"
 - tapOn: "GET STARTED"
-# - runFlow: "scroll-feed.yml"
+- runFlow: "scroll-feed.yml"
 - runFlow: "perform-search.yml"
-# - runFlow: "manual.yml"

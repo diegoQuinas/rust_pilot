@@ -13,5 +13,7 @@ custom_caps:
     value: org.wikipedia
   - key: appium:autoGrantPermissions
     value: true
-  - key: appium:skipServerInstallation
+  #  - key: appium:skipServerInstallation
+  #  value: true
+  - key: appium:dontStopAppOnReset
     value: true
