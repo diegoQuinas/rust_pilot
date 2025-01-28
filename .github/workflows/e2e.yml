@@ -18,6 +18,8 @@ jobs:
       # 1. Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # 2. Set up Java
       - name: Set up Java
@@ -67,4 +69,4 @@ jobs:
       # 8. Build Rust program
       - name: Compile and test
         run: |
-          cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-tests.yml
+          cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
