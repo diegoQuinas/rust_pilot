@@ -1,4 +1,4 @@
-name: Rust
+name: Run Appium Tests
 
 on:
   push:
@@ -17,5 +17,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build
         run: cargo build --release
+      - uses: reactivecircus/android-emulator-runner@v1 # install and create the Emulator
+        with:
+          api-level: 29
+          target: 9
+          arch: x86_64
+          profile: Nexus 6
       - name: Run tests
         run: ./target/release/rust_pilot ./showcase_wikipedia_android/run_test.yml
