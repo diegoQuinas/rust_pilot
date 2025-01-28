@@ -12,9 +12,11 @@ jobs:
     env:
       ANDROID_SDK_ROOT: ${{ secrets.ANDROID_SDK_ROOT }}
       JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
-      PATH: ${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH
 
     steps:
+      - name: Set Path ANDROID SDK ROOT
+        run: |
+          bash set PATH: ${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH
       # 1. Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
