@@ -1,6 +1,6 @@
 use std::{
     env,
-    fs::{self, File},
+    fs::File,
     io::{Read, Write},
     path::Path,
     process,
@@ -22,8 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
     validate_args(&args)?;
 
+    print_spaces();
     print_logo();
     print_version();
+    print_spaces();
 
     let caps_path = &args[1];
     let file_path = &args[2];
@@ -75,11 +77,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "reports/REPORT_{}.md",
         Local::now().format("%Y-%m%d_%H-%M-%S")
     );
-    if let Ok(mut report_file) = fs::File::create(&report_name) {
-        let _ = report_file.write_all(full_report.as_bytes());
-    } else {
-        eprintln!("{} Error creating report file", error_tag());
-    }
+
+    write_report(&report_name, &full_report).unwrap_or_else(|e| {
+        eprintln!(
+            "{} Error writing report file: {}",
+            error_tag(),
+            e.to_string().red()
+        );
+        process::exit(1);
+    });
+
     println!("\n\n{}", "Test suite runned successfully".green());
     println!("    Report file: {}", report_name);
     println!("    Actions executed: {}", steps_count);
@@ -96,6 +103,9 @@ fn validate_args(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn print_spaces() {
+    println!();
+}
 fn print_logo() {
     let logo = r#"
   _____                  _     _____    _   _           _   
@@ -110,9 +120,14 @@ fn print_logo() {
 
 fn print_version() {
     let version = env!("CARGO_PKG_VERSION");
-    println!("RustPilot version: {}", version);
+    println!("rust_pilot version: {}", version);
 }
 
+fn write_report(report_name: &str, full_report: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut report_file = File::create(&report_name)?;
+    report_file.write_all(full_report.as_bytes())?;
+    Ok(())
+}
 #[cfg(test)]
 mod tests {
     use super::*;
