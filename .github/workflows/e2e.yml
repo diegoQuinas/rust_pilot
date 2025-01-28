@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Set Path ANDROID SDK ROOT
         run: |
-          bash set PATH: ${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH
+          bash export PATH="${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
       # 1. Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
