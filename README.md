@@ -16,6 +16,22 @@ This is the solution, as a automation engineer, and after severe years of pain a
 
 ### How it works
 
+```mermaid
+flowchart TD
+idEngineer[QA Engineer] --writes--> idA(Tests in Yaml)
+idAppium(Appium Server)
+idA --readed by--> idRustPilot(RustPilot)
+idAppiumClient[Appium Rust Client]
+idRustPilot --parses--> idAppiumClient
+idAppiumClient --sends http--> idAppium
+idAppium --interacts--> idF(flutter app)
+idF --> idI
+idF --> idAndroid
+idAppium --interacts--> idI(iOS Device)
+idAppium --interacts--> idAndroid(Android Device)
+
+```
+
 RustPilot it's an intermediary into the appium_client of rust and a yaml of instructions very similar and compatible with Maestro (automation mobile) like test instructions yaml file
 
 ### For example
