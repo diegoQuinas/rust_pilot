@@ -19,7 +19,7 @@ use fantoccini::{
 use spinners::Spinner;
 use tokio::time::{timeout, Duration};
 
-use crate::shared::*;
+use crate::common::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IosCaps {

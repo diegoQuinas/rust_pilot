@@ -1,22 +1,23 @@
-use std::any::type_name;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
+use std::path::Path;
 use std::process;
 use std::time::Duration;
-use std::{fs, path::Path};
 
 use colored::Colorize;
 use fantoccini::Client;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use serde_yaml;
 use serde_yaml::Deserializer;
-use serde_yaml::{self, Value};
 use spinners::Spinner;
 use tokio::time::sleep;
 
-use crate::tags::{error_tag, info_tag, ok_tag};
+pub mod tags;
+use tags::*;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
 pub struct TestFileHeader {
     pub appId: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -35,6 +36,7 @@ pub struct StepFile(pub Vec<Step>);
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
+#[allow(non_snake_case)]
 pub enum Step {
     RunFlow { runFlow: String },
     TapOn { tapOn: TapOn },
@@ -57,7 +59,7 @@ pub struct ScreenPercentages(String);
 
 impl ScreenPercentages {
     pub fn to_f64(&self) -> (f64, f64) {
-        let numbers = self
+        let numbers: Vec<f64> = self
             .0
             .split(",")
             .map(|s| s.trim_end_matches("%"))
@@ -65,7 +67,7 @@ impl ScreenPercentages {
             .map(|number| {
                 number.parse::<f64>().unwrap_or_else(|err| {
                     eprintln!(
-                        "{} Error: Swipe percentage must be a number: {:?}, {}",
+                        "{} Error: Swipe percentage must be a number: {:#?}, {}",
                         error_tag(),
                         number,
                         err
@@ -73,7 +75,7 @@ impl ScreenPercentages {
                     process::exit(1);
                 })
             })
-            .collect::<Vec<f64>>();
+            .collect();
 
         if numbers.len() != 2 {
             eprintln!(
@@ -97,6 +99,7 @@ impl ScreenPercentages {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
 pub struct LaunchApp {
     pub clearState: bool,
 }
@@ -120,6 +123,7 @@ pub struct TapOnOption {
 pub enum Platform {
     Android,
     Ios,
+    Flutter,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -141,7 +145,7 @@ pub enum CustomCapabilityValue {
 }
 
 pub async fn pause_action(duration: u64) {
-    let mut sp = start_spinner(format!("Pausing for {duration} millis"));
+    let _sp = start_spinner(format!("Pausing for {duration} millis"));
     let duration = Duration::from_millis(duration);
     sleep(duration).await;
 }
@@ -180,7 +184,7 @@ pub async fn flatten_steps(
                 }
 
                 // Parsear el archivo de pasos
-                let (_, steps) = parse_test_file(step_path.clone());
+                let (_, steps) = parse_test_file(&step_path);
 
                 // Recursivamente aplanar los pasos del archivo cargado
                 let (sub_steps, mermaid_sub_steps) =
@@ -209,6 +213,47 @@ pub async fn flatten_steps(
     (flattened_steps, mermaid_steps)
 }
 
+pub async fn error_take_screenshot(client: &Client) {
+    take_screenshot(client, "error_screenshot.png").await;
+}
+
+pub async fn take_screenshot(client: &Client, take_screenshot: &str) {
+    let mut sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
+    let screenshot = client.screenshot().await.unwrap();
+    let mut file = File::create(&take_screenshot).unwrap();
+    file.write_all(&screenshot).unwrap();
+    sp.stop_with_symbol(&format!("{} Screenshot taken", ok_tag()));
+}
+
+pub fn parse_test_file<P: AsRef<Path>>(path: P) -> (TestFileHeader, Vec<Step>) {
+    let content = get_content(&path);
+    let (header, steps) = deserialize_test_file(&content);
+    (header, steps)
+}
+
+fn get_content<P: AsRef<Path>>(path: P) -> String {
+    let content = fs::read_to_string(&path).unwrap_or_else(|err| {
+        eprintln!(
+            "{} Failed to read YAML file {}: {}",
+            error_tag(),
+            path.as_ref().display().to_string().blue(),
+            err.to_string().red()
+        );
+        process::exit(1);
+    });
+    content
+}
+
+fn deserialize_test_file(content: &str) -> (TestFileHeader, Vec<Step>) {
+    let mut documents = Deserializer::from_str(&content);
+
+    let header: TestFileHeader = deserialize_document(documents.next(), "header");
+
+    let steps: StepFile = deserialize_document(documents.next(), "steps");
+
+    (header, steps.0)
+}
+
 fn deserialize_document<T: DeserializeOwned>(
     deserializer: Option<Deserializer>,
     context: &str,
@@ -223,40 +268,4 @@ fn deserialize_document<T: DeserializeOwned>(
             process::exit(1);
         }
     }
-}
-
-/// Función principal para parsear el archivo de prueba
-pub fn parse_test_file<P: AsRef<Path>>(path: P) -> (TestFileHeader, Vec<Step>) {
-    let content = fs::read_to_string(&path).unwrap_or_else(|err| {
-        eprintln!(
-            "{} Failed to read YAML file {}: {}",
-            error_tag(),
-            path.as_ref().display(),
-            err
-        );
-        process::exit(1);
-    });
-
-    // Crear el deserializador para múltiples documentos
-    let mut documents = Deserializer::from_str(&content);
-
-    // Deserializar el encabezado
-    let header: TestFileHeader = deserialize_document(documents.next(), "header");
-
-    // Deserializar los pasos
-    let steps: StepFile = deserialize_document(documents.next(), "steps");
-
-    (header, steps.0)
-}
-
-pub async fn error_take_screenshot(client: &Client) {
-    take_screenshot(client, "error_screenshot.png").await;
-}
-
-pub async fn take_screenshot(client: &Client, take_screenshot: &str) {
-    let mut sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
-    let screenshot = client.screenshot().await.unwrap();
-    let mut file = File::create(&take_screenshot).unwrap();
-    file.write_all(&screenshot).unwrap();
-    sp.stop_with_symbol(&format!("{} Screenshot taken", ok_tag()));
 }
