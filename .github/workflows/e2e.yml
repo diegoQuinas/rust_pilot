@@ -1,24 +1,132 @@
-name: Run Appium Tests
-
-on:
-  push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+name: Functional Tests
 
 env:
   CARGO_TERM_COLOR: always
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - apiLevel: 32
+            emuTag: google_apis
+            arch: x86_64
+          - apiLevel: 30
+            emuTag: google_apis
+            arch: x86
+          - apiLevel: 28
+            emuTag: default
+            arch: x86
+          - apiLevel: 23
+            emuTag: default
+            arch: x86
 
+    env:
+      CI: true
+      ANDROID_AVD: emulator
+      APPIUM_TEST_SERVER_PORT: 4567
+      APPIUM_TEST_SERVER_HOST: 127.0.0.1
+      _FORCE_LOGS: 1
+      TEST_PASS_THRESHOLD: 10
+    # No hardware acceleration is available for emulators on Ubuntu:
+    # https://github.com/marketplace/actions/android-emulator-runner#can-i-use-this-action-on-linux-vms
+    runs-on: ubuntu-latest
     steps:
-      - uses: reactivecircus/android-emulator-runner@v1 # install and create the Emulator
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          api-level: 29
-          target: 9
-          arch: x86_64
-          profile: Nexus 6
+          node-version: lts/*
+          check-latest: true
+      - run: curl -sSL https://bit.ly/install-xq | sudo bash
+      - run: |
+          npm install mocha-multi-reporters --save-dev
+          npm install -g appium
+          npm install --no-save mjpeg-consumer
+        name: Install dev dependencies
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: AVD cache
+        uses: actions/cache@v3
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.apiLevel }}
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          avd-name: ${{ env.ANDROID_AVD }}
+          force-avd-creation: false
+          api-level: ${{ matrix.apiLevel }}
+          disable-spellchecker: true
+          target: ${{ matrix.emuTag }}
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          arch: ${{ matrix.arch }}
+          disable-animations: true
+          script: echo "Generated AVD snapshot for caching."
+      - run: |
+          cwd=$(pwd)
+          pushd "$cwd"
+          cd ~
+          appium driver install --source=local "$cwd"
+          appium driver doctor uiautomator2
+          nohup appium server \
+            --port=$APPIUM_TEST_SERVER_PORT \
+            --address=$APPIUM_TEST_SERVER_HOST \
+            --relaxed-security \
+            --log-no-colors \
+            --log-timestamp \
+            2>&1 > "$cwd/appium.log" &
+          popd
+        name: Start Appium server
+      - run: nohup adb logcat > logcat.log &
+        name: Capture logcat
+      - uses: reactivecircus/android-emulator-runner@v2
+        name: e2e_api${{ matrix.apiLevel }}
+        with:
+          script: bash -xe scripts/run-functional-tests.sh
+          avd-name: ${{ env.ANDROID_AVD }}
+          force-avd-creation: false
+          api-level: ${{ matrix.apiLevel }}
+          disable-spellchecker: true
+          disable-animations: true
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          target: ${{ matrix.emuTag }}
+          arch: ${{ matrix.arch }}
+      - name: Save logcat output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@master
+        with:
+          name: logcat-api${{ matrix.apiLevel }}
+          path: logcat.log
+      - name: Save server output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@master
+        with:
+          name: appium-api${{ matrix.apiLevel }}
+          path: appium.log
       - name: Run tests
         run: cargo run --bin rust_pilot ./showcase_wikipedia_android/wikipedia.android.capabilities ./showcase_wikipedia_android/run_test.yml
