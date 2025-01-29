@@ -17,3 +17,5 @@ custom_caps:
   #  value: true
   - key: appium:dontStopAppOnReset
     value: true
+  - key: appium:suppressKillServer
+    value: true
