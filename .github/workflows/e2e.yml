@@ -15,11 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
-          java-version: '11'
-          distribution: 'adopt'
+          java-version: '17'
+          distribution: 'temurin'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
@@ -43,28 +43,9 @@ jobs:
       - name: Install Appium
         run: |
           npm install -g appium
-          appium
 
       - name: Run RustPilot tests on Android
         run: |
+          # Aquí colocas los comandos para ejecutar tus pruebas con RustPilot en Android
+          # Por ejemplo:
           cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
-
-#   test-ios:
-#     runs-on: macos-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
-
-#       - name: Set up Xcode
-#         run: |
-#           sudo xcode-select -s /Applications/Xcode_12.4.app/Contents/Developer
-
-#       - name: Install Appium
-#         run: |
-#           npm install -g appium
-
-#       - name: Run RustPilot tests on iOS
-#         run: |
-#           # Aquí colocas los comandos para ejecutar tus pruebas con RustPilot en iOS
-#           # Por ejemplo:
-#           cargo test --target x86_64-apple-darwin
