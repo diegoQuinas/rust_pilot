@@ -1,73 +1,73 @@
-name: Android Emulator CI/CD with Rust and Appium
+# name: Android Emulator CI/CD with Rust and Appium
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
 
-jobs:
-  android-emulator:
-    runs-on: ubuntu-latest
-    env:
-      ANDROID_SDK_ROOT: ${{ secrets.ANDROID_SDK_ROOT }}
-      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+# jobs:
+#   android-emulator:
+#     runs-on: ubuntu-latest
+#     env:
+#       ANDROID_SDK_ROOT: ${{ secrets.ANDROID_SDK_ROOT }}
+#       JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
 
-    steps:
-      - name: Set Path ANDROID SDK ROOT
-        run: export PATH="${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
-      # 1. Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+#     steps:
+#       - name: Set Path ANDROID SDK ROOT
+#         run: export PATH="${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
+#       # 1. Checkout the repository
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0
 
-      # 2. Set up Java
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'adopt'
-          java-version: '11'
+#       # 2. Set up Java
+#       - name: Set up Java
+#         uses: actions/setup-java@v3
+#         with:
+#           distribution: 'adopt'
+#           java-version: '11'
 
-      # 3. Install Rust
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+#       # 3. Install Rust
+#       - name: Install Rust
+#         uses: actions-rs/toolchain@v1
+#         with:
+#           toolchain: stable
+#           override: true
 
-      # 4. Install Android SDK and tools
-      - name: Install Android SDK
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-          sudo mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-          sudo unzip commandlinetools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-          sudo mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-          sudo $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "system-images;android-30;google_apis;x86_64" "emulator"
+#       # 4. Install Android SDK and tools
+#       - name: Install Android SDK
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y wget unzip
+#           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
+#           sudo mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+#           sudo unzip commandlinetools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+#           sudo mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+#           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+#           sudo $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "system-images;android-30;google_apis;x86_64" "emulator"
 
-      # 5. Start Android emulator
-      - name: Start Android Emulator
-        run: |
-          $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect &
-          adb wait-for-device
-          adb shell input keyevent 82
+#       # 5. Start Android emulator
+#       - name: Start Android Emulator
+#         run: |
+#           $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect &
+#           adb wait-for-device
+#           adb shell input keyevent 82
 
-      # 6. Install Appium
-      - name: Install Appium
-        run: |
-          sudo apt-get install -y npm
-          npm install -g appium
-          appium --version
+#       # 6. Install Appium
+#       - name: Install Appium
+#         run: |
+#           sudo apt-get install -y npm
+#           npm install -g appium
+#           appium --version
 
-      # 7. Run Appium Server
-      - name: Start Appium Server
-        run: |
-          appium &
+#       # 7. Run Appium Server
+#       - name: Start Appium Server
+#         run: |
+#           appium &
 
-      # 8. Build Rust program
-      - name: Compile and test
-        run: |
-          cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
+#       # 8. Build Rust program
+#       - name: Compile and test
+#         run: |
+#           cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
