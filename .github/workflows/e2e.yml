@@ -10,7 +10,7 @@ on:
 
 jobs:
   test-android:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -47,7 +47,7 @@ jobs:
 
       - name: Start Appium
         run: |
-          appium &
+          nohup appium > appium.log 2>&1 &
 
       - name: Run RustPilot tests on Android
         run: |
