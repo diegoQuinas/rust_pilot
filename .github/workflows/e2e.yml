@@ -22,20 +22,21 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android-sdk@v1
+        uses: android-actions/setup-android@v2
 
-      - name: Create Android Virtual Device
+      - name: Install Android System Image and Create AVD
         run: |
-          echo "y" | sdkmanager "system-images;android-30;google_apis;x86"
-          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" -d "pixel_xl"
+          sdkmanager --install "platforms;android-30" "system-images;android-30;google_apis;x86_64" "platform-tools"
+          avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" -d "pixel_xl"
 
       - name: Start Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
-          arch: x86
+          arch: x86_64
           profile: pixel_xl
           disable-animations: true
+          hardware-renderer: swiftshader_indirect
           script: |
             adb devices
             adb logcat -c
@@ -44,8 +45,10 @@ jobs:
         run: |
           npm install -g appium
 
+      - name: Start Appium
+        run: |
+          appium &
+
       - name: Run RustPilot tests on Android
         run: |
-          # Aquí colocas los comandos para ejecutar tus pruebas con RustPilot en Android
-          # Por ejemplo:
           cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
