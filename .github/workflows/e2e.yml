@@ -1,73 +1,70 @@
-# name: Android Emulator CI/CD with Rust and Appium
+name: CI/CD Pipeline for RustPilot
 
-# on:
-#   push:
-#     branches:
-#       - main
-#   pull_request:
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
-# jobs:
-#   android-emulator:
-#     runs-on: ubuntu-latest
-#     env:
-#       ANDROID_SDK_ROOT: ${{ secrets.ANDROID_SDK_ROOT }}
-#       JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+jobs:
+  test-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Create Android Virtual Device
+        run: |
+          echo "y" | sdkmanager "system-images;android-30;google_apis;x86"
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86" -d "pixel_xl"
+
+      - name: Start Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86
+          profile: pixel_xl
+          disable-animations: true
+          script: |
+            adb devices
+            adb logcat -c
+
+      - name: Install Appium
+        run: |
+          npm install -g appium
+          appium
+
+      - name: Run RustPilot tests on Android
+        run: |
+          cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
+
+#   test-ios:
+#     runs-on: macos-latest
 #     steps:
-#       - name: Set Path ANDROID SDK ROOT
-#         run: export PATH="${{ secrets.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:$PATH"
-#       # 1. Checkout the repository
-#       - name: Checkout Code
-#         uses: actions/checkout@v3
-#         with:
-#           fetch-depth: 0
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-#       # 2. Set up Java
-#       - name: Set up Java
-#         uses: actions/setup-java@v3
-#         with:
-#           distribution: 'adopt'
-#           java-version: '11'
-
-#       # 3. Install Rust
-#       - name: Install Rust
-#         uses: actions-rs/toolchain@v1
-#         with:
-#           toolchain: stable
-#           override: true
-
-#       # 4. Install Android SDK and tools
-#       - name: Install Android SDK
+#       - name: Set up Xcode
 #         run: |
-#           sudo apt-get update
-#           sudo apt-get install -y wget unzip
-#           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O commandlinetools.zip
-#           sudo mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-#           sudo unzip commandlinetools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-#           sudo mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-#           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
-#           sudo $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "system-images;android-30;google_apis;x86_64" "emulator"
+#           sudo xcode-select -s /Applications/Xcode_12.4.app/Contents/Developer
 
-#       # 5. Start Android emulator
-#       - name: Start Android Emulator
-#         run: |
-#           $ANDROID_SDK_ROOT/emulator/emulator -avd test -no-audio -no-window -gpu swiftshader_indirect &
-#           adb wait-for-device
-#           adb shell input keyevent 82
-
-#       # 6. Install Appium
 #       - name: Install Appium
 #         run: |
-#           sudo apt-get install -y npm
 #           npm install -g appium
-#           appium --version
 
-#       # 7. Run Appium Server
-#       - name: Start Appium Server
+#       - name: Run RustPilot tests on iOS
 #         run: |
-#           appium &
-
-#       # 8. Build Rust program
-#       - name: Compile and test
-#         run: |
-#           cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml
+#           # Aquí colocas los comandos para ejecutar tus pruebas con RustPilot en iOS
+#           # Por ejemplo:
+#           cargo test --target x86_64-apple-darwin
