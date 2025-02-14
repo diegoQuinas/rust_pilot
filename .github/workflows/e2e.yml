@@ -1,0 +1,58 @@
+name: CI/CD Pipeline for RustPilot
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install Android System Image and Create AVD
+        run: |
+          sdkmanager --install "platforms;android-30" "system-images;android-30;google_apis;x86_64" "platform-tools"
+          avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" -d "pixel_xl"
+
+      - name: Start Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_xl
+          disable-animations: true
+          hardware-renderer: swiftshader_indirect
+          script: |
+            adb devices
+            adb logcat -c
+
+      - name: Install Appium
+        run: |
+          npm install -g appium
+
+      - name: Install UIAutomator2 driver
+        run: |
+          appium driver install uiautomator2
+
+      - name: Start Appium
+        run: |
+          nohup appium > appium.log 2>&1 &
+
+      - name: Run RustPilot tests on Android
+        run: |
+          cargo run --bin rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.yaml ./showcase-wikipedia-android/run-test.yml

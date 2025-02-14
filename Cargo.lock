@@ -642,22 +642,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
-name = "maestro-rs"
-version = "0.1.0"
-dependencies = [
- "appium-client",
- "chrono",
- "colored",
- "fantoccini",
- "once_cell",
- "serde",
- "serde_json",
- "serde_yaml",
- "spinners",
- "tokio",
-]
-
-[[package]]
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -864,6 +848,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b6dfecf2c74bce2466cabf93f6664d6998a69eb21e39f4207930065b27b771f"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "rust_pilot"
+version = "0.1.0"
+dependencies = [
+ "appium-client",
+ "chrono",
+ "colored",
+ "fantoccini",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "spinners",
+ "tokio",
 ]
 
 [[package]]

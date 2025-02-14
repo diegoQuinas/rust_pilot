@@ -1,27 +1,16 @@
 mod steps;
 
-use std::{cell::LazyCell, process, sync::Mutex, time::Duration};
+use std;
 
-use appium_client::{
-    capabilities::android::AndroidCapabilities, commands::keyboard::PressesKey, find::By,
-    ClientBuilder,
-};
+use appium_client::{capabilities::android::AndroidCapabilities, find::By, ClientBuilder};
 use colored::Colorize;
-use fantoccini::{client, elements::Element, error::WebDriver};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use spinners::Spinner;
 
-use appium_client::{
-    capabilities::{AppCapable, AppiumCapability},
-    wait::AppiumWait,
-};
+use appium_client::capabilities::{AppCapable, AppiumCapability};
 use steps::execute_android_steps;
 
-use crate::{
-    shared::*,
-    tags::{error_tag, info_tag},
-};
+use crate::{common::tags::*, common::*};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]

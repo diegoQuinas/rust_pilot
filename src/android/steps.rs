@@ -5,11 +5,11 @@ use fantoccini::actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON
 
 use crate::{
     android::{get_android_element_by, AndroidElementSelector},
-    shared::{error_take_screenshot, start_spinner},
-    tags::{error_tag, info_tag, ok_tag, valid_report_tag},
+    common::tags::{error_tag, info_tag, ok_tag, valid_report_tag},
+    common::{error_take_screenshot, start_spinner},
 };
 
-use super::{Step, SwipeOptions, TapOn};
+use super::{Step, TapOn};
 
 pub async fn execute_android_steps(
     client: &Client<AndroidCapabilities>,
@@ -189,6 +189,7 @@ pub async fn execute_android_steps(
                 }
                 TapOn::TapOnOption(tap_on_options) => {
                     let selector = {
+                        #[allow(unused_variables)]
                         if let Some(class_name) = tap_on_options.optional {
                             panic!("NOT DEVELOPED OPTIONAL");
                         }
