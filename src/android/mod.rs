@@ -1,10 +1,11 @@
 mod steps;
 
-use std;
+use std::{self, collections::HashMap};
 
-use appium_client::{capabilities::android::AndroidCapabilities, find::By, ClientBuilder};
+use appium_client::{capabilities::{self, android::AndroidCapabilities}, find::By, ClientBuilder};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use spinners::Spinner;
 
 use appium_client::capabilities::{AppCapable, AppiumCapability};
@@ -127,23 +128,40 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
 }
 
 pub async fn launch_android_main(
-    capabilities: CapsFile,
+    capabilities: &HashMap<String, Value>,
     steps: Vec<Step>,
 ) -> Result<(u32, String), Box<dyn std::error::Error>> {
     // Configure the Appium driver
     let mut caps = AndroidCapabilities::new_uiautomator();
 
-    let app_path = capabilities.app_path.clone();
+    let app_path = capabilities.get("appium:app").expect("No app path found").as_str().unwrap();
     caps.app(&app_path);
 
-    caps.platform_version(&capabilities.platform_version);
-    caps.full_reset(capabilities.full_reset);
+    caps.platform_version(&capabilities.get("platformVersion").expect("No platform version found").as_str().unwrap());
 
-    if let Some(custom_caps) = capabilities.custom_caps {
-        set_custom_capabilities_android(&mut caps, custom_caps.clone());
-    };
+    for (key,value) in capabilities.iter() {
+        match key.as_str() {
+            "app" | "platformVersion" => continue,
+            _ => {
+                match value {
+                    Value::String(value) => {
+                        caps.set_str(key, value);
+                    }
+                    Value::Bool(value) => {
+                        caps.set_bool(key, *value);
+                    }
+                    _ => {
+                        eprintln!("{} Invalid value for key: {}", error_tag(), key);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+    }
+        
+    
 
-    println!("{} App path: {}", info_tag(), capabilities.app_path.blue());
+    println!("{} App path: {}", info_tag(), &capabilities.get("appium:app").unwrap().to_string().blue());
     let mut spinner = Spinner::new(
         spinners::Spinners::Arrow,
         "Launching android app".to_string(),
@@ -154,7 +172,7 @@ pub async fn launch_android_main(
         .unwrap_or_else(|e| {
             spinner.stop_with_symbol(&format!(
                 "{} Failed to connect to Appium: {}",
-                "[ERR]".red(),
+                error_tag(),
                 e
             ));
             std::process::exit(1);

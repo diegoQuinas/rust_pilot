@@ -1,10 +1,5 @@
 use std::{
-    env,
-    fs::File,
-    io::{Read, Write},
-    path::Path,
-    process,
-    time::Instant,
+    collections::HashMap, env, fs::File, io::{Read, Write}, path::Path, process, str::FromStr, time::Instant
 };
 
 use chrono::Local;
@@ -16,6 +11,7 @@ use rust_pilot::{
         *,
     },
 };
+use serde_json::Value;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -46,24 +42,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut caps_contents = String::new();
     caps_file.read_to_string(&mut caps_contents)?;
 
-    let capabilities_file: CapsFile = serde_yaml::from_str(&caps_contents)?;
+    let capabilities_file: HashMap<String, Value> = serde_json::from_str(&caps_contents)?;
 
     let start = Instant::now();
-    let (steps_count, report) = match capabilities_file.platform {
-        Platform::Ios => {
-            todo!("### IOS NOT IMPLEMENTED")
+    let (steps_count, report) = match capabilities_file.get("platformName") {
+        Some(Value::String(platform)) => match platform.as_str() {
+            "android" => launch_android_main(&capabilities_file, flattened_steps)
+                .await
+                .unwrap_or_else(|err| {
+                    eprintln!("{} Error launching Android test: {}", error_tag(), err);
+                    (
+                        0,
+                        format!("### ERROR LAUNCHING ANDROID TEST\n```{}```", err),
+                    )
+                }),
+            "ios" => {
+                todo!("### IOS NOT IMPLEMENTED")
+            }
+            _ => {
+                eprintln!("{} Invalid platform", error_tag());
+                process::exit(1);
+            }
+        },
+        None => {
+            eprintln!("{} Missing platform key in caps file", error_tag());
+            process::exit(1);
         }
-        Platform::Android => launch_android_main(capabilities_file, flattened_steps)
-            .await
-            .unwrap_or_else(|err| {
-                eprintln!("{} Error launching Android test: {}", error_tag(), err);
-                (
-                    0,
-                    format!("### ERROR LAUNCHING ANDROID TEST\n```{}```", err),
-                )
-            }),
-        Platform::Flutter => {
-            todo!("### FLUTTER NOT IMPLEMENTED")
+        Some(_) => {
+            eprintln!("{} Invalid platform key in caps file", error_tag());
+            process::exit(1);
         }
     };
 

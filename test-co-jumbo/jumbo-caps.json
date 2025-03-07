@@ -1,0 +1,13 @@
+{
+  "platformName": "android",
+  "appium:app": "./app/wikipedia.apk",
+  "platformVersion": "15",
+  "appium:automationName": "UiAutomator2",
+  "appium:fullReset": true,
+  "appium:appWaitActivity": "*",
+  "appium:appActivity": "org.wikipedia.main.MainActivity",
+  "appium:appPackage": "org.wikipedia",
+  "appium:autoGrantPermissions": true,
+  "appium:dontStopAppOnReset": true,
+  "appium:suppressKillServer": true
+}

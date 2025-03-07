@@ -1,0 +1,10 @@
+appId: org.co-jumbo
+tags:
+  - android
+  - passing
+---
+- launchApp:
+    clearState: true
+#- runFlow: "onboarding/main.yml"
+- tapOn: "Hola"
+
