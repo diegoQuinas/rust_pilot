@@ -50,7 +50,14 @@ pub enum AndroidAction {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
+#[allow(non_snake_case)]
 pub enum AndroidElementSelector {
+    Hint {
+        hint: String,
+    },
+    AccessibilityId {
+        accessibilityId: String,
+    },
     Text {
         text: String,
     },
@@ -58,8 +65,8 @@ pub enum AndroidElementSelector {
         xpath: String,
     },
     ClassName {
-        class_name: String,
-        instance: Option<i32>,
+        className: String,
+        instance: Option<u32>,
     },
     Id {
         id: String,
@@ -71,6 +78,9 @@ pub enum AndroidElementSelector {
     Description {
         description: String,
     },
+    Index {
+        index: u32,
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -96,6 +106,10 @@ pub fn set_custom_capabilities_android(
 
 pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
     match selector {
+        AndroidElementSelector::Index { index } => By::uiautomator(&format!("new UiSelector().index({});", index)),
+        AndroidElementSelector::AccessibilityId { accessibilityId } => {
+            By::accessibility_id(&accessibilityId)
+        }
         AndroidElementSelector::Xpath { xpath } => By::xpath(&xpath),
         AndroidElementSelector::Text { text } => {
             By::uiautomator(&format!("new UiSelector().textMatches(\"{}\");", text))
@@ -104,6 +118,10 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
             "new UiSelector().descriptionMatches(\"{}\");",
             description
         )),
+        AndroidElementSelector::Hint { hint } => By::xpath(&format!(
+            "//android.widget.EditText[@hint=\"{}\"]",
+            hint
+        )), 
         AndroidElementSelector::IdWithIndex { id, index } => By::uiautomator(&format!(
             "new UiSelector().resourceIdMatches(\"{}\").index({});",
             id, index
@@ -112,16 +130,16 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
             By::uiautomator(&format!("new UiSelector().resourceIdMatches(\"{}\");", id))
         }
         AndroidElementSelector::ClassName {
-            class_name,
+            className,
             instance,
         } => {
             if let Some(instance) = instance {
                 By::uiautomator(&format!(
                     "new UiSelector().className({}).instance({})",
-                    class_name, instance
+                    className, instance
                 ))
             } else {
-                By::uiautomator(&format!("new UiSelector().className({})", class_name))
+                By::uiautomator(&format!("new UiSelector().className({})", className))
             }
         }
     }

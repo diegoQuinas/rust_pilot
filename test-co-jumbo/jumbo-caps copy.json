@@ -5,10 +5,9 @@
   "appium:automationName": "UiAutomator2",
   "appium:fullReset": true,
   "appium:appWaitActivity": "*",
+  "appium:appActivity": "org.wikipedia.main.MainActivity",
+  "appium:appPackage": "org.wikipedia",
   "appium:autoGrantPermissions": true,
   "appium:dontStopAppOnReset": true,
-  "appium:suppressKillServer": true,
-  "appium:settings[allowInvisibleElements]": true,
-  "appium:settings[ignoreUnimportantViews]": false,
-  "appium:settings[enableMultiWindows]": true
+  "appium:suppressKillServer": true
 }

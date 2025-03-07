@@ -111,11 +111,16 @@ pub enum TapOn {
     TapOnOption(TapOnOption),
 }
 #[derive(Serialize, Deserialize, Debug)]
+#[allow(non_snake_case)]
 pub struct TapOnOption {
     pub id: Option<String>,
     pub text: Option<String>,
     pub optional: Option<bool>,
     pub index: Option<u32>,
+    pub instance: Option<u32>,
+    pub className: Option<String>,
+    pub description: Option<String>,
+    pub hint: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

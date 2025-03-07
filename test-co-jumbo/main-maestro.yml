@@ -6,21 +6,16 @@ tags:
 - launchApp:
     clearState: true
 #- runFlow: "onboarding/main.yml"
-- tapOn: 
-    hint: RUT o Email
+- tapOn: RUT o Email
 - inputText: "testingapp123456@yopmail.com"
-- tapOn: 
-    hint: Contraseña
+- tapOn: Contraseña
 - inputText: "Test1234"
 - tapOn: "Iniciar sesión"
-- tapOn: 
-    hint: "Calle y número, comuna o referencia"
+- tapOn: "Calle y número, comuna o referencia"
 - inputText: "Calle 123"
-- tapOn:
-    description: ".*Buenos Aires.*"
+- tapOn: ".*Buenos Aires.*"
 - tapOn: "Confirmar"
-- tapOn: 
-    hint: "Nombre de la dirección"
+- tapOn: "Nombre de la dirección"
 - inputText: "Casa"
 - tapOn: "Agregar dirección"
 

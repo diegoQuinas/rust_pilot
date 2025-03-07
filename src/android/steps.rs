@@ -201,8 +201,27 @@ pub async fn execute_android_steps(
                             } else {
                                 AndroidElementSelector::Id { id }
                             }
+                        } else if let Some(index) = tap_on_options.index {
+                            AndroidElementSelector::Index { index}
+                        } else if let Some(description) = tap_on_options.description {
+                            AndroidElementSelector::Description { description }
+                        } else if let Some(class_name) = tap_on_options.className {
+                            if let Some(instance) = tap_on_options.instance {
+                                AndroidElementSelector::ClassName {
+                                    className: class_name,
+                                    instance: Some(instance),
+                                }
+                            } else {
+                                AndroidElementSelector::ClassName {
+                                    className: class_name,
+                                    instance: None,
+                                }
+                            }
+                        } else if let Some(hint) = tap_on_options.hint {
+                            AndroidElementSelector::Hint { hint} 
                         } else {
-                            panic!("NOT DEVELOPED TAP ON OPTION");
+                            eprintln!("{} NOT DEVELOPED TAP ON OPTION", error_tag());
+                            process::exit(1)
                         }
                     };
                     let by = get_android_element_by(selector.clone());
