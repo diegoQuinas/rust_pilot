@@ -6,4 +6,3 @@ tags:
     hint: "Nombre de la dirección"
 - inputText: "Casa"
 - tapOn: "Agregar dirección"
-- runFlow: "success-message.yml"

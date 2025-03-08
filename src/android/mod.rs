@@ -2,11 +2,9 @@ mod steps;
 
 use std::collections::HashMap;
 
-use appium_client::{
-    capabilities::{self, android::AndroidCapabilities},
-    find::By,
-    ClientBuilder,
-};
+use appium_client::capabilities::android::AndroidCapabilities;
+use appium_client::find::By;
+use appium_client::ClientBuilder;
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -15,7 +13,8 @@ use serde_json::Value;
 use appium_client::capabilities::{AppCapable, AppiumCapability};
 use steps::execute_android_steps;
 
-use crate::{common::tags::*, common::*};
+use crate::common::tags::*;
+use crate::common::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -100,9 +99,18 @@ pub fn set_custom_capabilities_android(
         match custom_capability.value {
             CustomCapabilityValue::BooleanValue(value) => {
                 caps.set_bool(&custom_capability.key, value)
-            }
+            },
             CustomCapabilityValue::StringValue(value) => {
                 caps.set_str(&custom_capability.key, &value)
+            },
+            CustomCapabilityValue::NumberValue(value) => {
+                // Handle number values appropriately
+                // Convert the number to a string
+                let num_str = value.to_string();
+                caps.set_str(&custom_capability.key, &num_str);
+            },
+            CustomCapabilityValue::NullValue => {
+                // Handle null values if needed
             }
         }
     }
