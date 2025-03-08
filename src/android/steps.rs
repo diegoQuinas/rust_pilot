@@ -14,11 +14,11 @@ use super::{Step, TapOn};
 pub async fn execute_android_steps(
     client: &Client<AndroidCapabilities>,
     steps: Vec<Step>,
-) -> (u32, String) {
+) -> (usize, String) {
     let mut report =
         "### Android Steps\n| Description | State | Observation | \n |----|----|----|\n"
             .to_string();
-    let steps_count = steps.len() as u32;
+    let steps_count = steps.len() as usize;
     for step in steps {
         match step {
             Step::Swipe { swipe } => {
@@ -34,7 +34,7 @@ pub async fn execute_android_steps(
                     (device_size.1 as f64 * (end.1) / 100.0).round() as i64,
                 );
                 let swipe_options = swipe;
-                let mut sp = start_spinner(format!("Swiping: {:?}", swipe_options));
+                let sp = start_spinner(format!("Swiping: {:?}", swipe_options));
                 let swipe_down = TouchActions::new("finger".to_string())
                     .then(PointerAction::MoveTo {
                         duration: Some(Duration::from_millis(0)),
@@ -66,7 +66,7 @@ pub async fn execute_android_steps(
                     text: assertVisible.clone(),
                 };
                 let by = get_android_element_by(selector.clone());
-                let mut sp = start_spinner(format!("Asserting visible: {:?}", selector));
+                let sp = start_spinner(format!("Asserting visible: {:?}", selector));
                 let element = match client.appium_wait().for_element(by.clone()).await {
                     Ok(element) => element,
                     Err(err) => {
@@ -97,7 +97,7 @@ pub async fn execute_android_steps(
                     text: assertNotVisible.clone(),
                 };
                 let by = get_android_element_by(selector.clone());
-                let mut sp = start_spinner(format!("Asserting not visible: {:?}", selector));
+                let sp = start_spinner(format!("Asserting not visible: {:?}", selector));
                 if let Ok(element) = client
                     .appium_wait()
                     .at_most(Duration::from_millis(1000))
@@ -131,7 +131,7 @@ pub async fn execute_android_steps(
                         text: string.clone(),
                     };
                     let by = get_android_element_by(selector_text);
-                    let mut sp = start_spinner(format!("Tapping on text: {:?}", string));
+                    let sp = start_spinner(format!("Tapping on text: {:?}", string));
                     let element = client
                         .appium_wait()
                         .at_most(Duration::from_millis(1000))
@@ -151,7 +151,7 @@ pub async fn execute_android_steps(
                             info_tag(),
                             string
                         ));
-                        let mut spinner =
+                        let spinner =
                             start_spinner(format!("Tapping on description: {}", string));
                         let selector_description = AndroidElementSelector::Description {
                             description: string.clone(),
@@ -202,7 +202,7 @@ pub async fn execute_android_steps(
                                 AndroidElementSelector::Id { id }
                             }
                         } else if let Some(index) = tap_on_options.index {
-                            AndroidElementSelector::Index { index}
+                            AndroidElementSelector::Index { index }
                         } else if let Some(description) = tap_on_options.description {
                             AndroidElementSelector::Description { description }
                         } else if let Some(class_name) = tap_on_options.className {
@@ -218,14 +218,14 @@ pub async fn execute_android_steps(
                                 }
                             }
                         } else if let Some(hint) = tap_on_options.hint {
-                            AndroidElementSelector::Hint { hint} 
+                            AndroidElementSelector::Hint { hint }
                         } else {
                             eprintln!("{} NOT DEVELOPED TAP ON OPTION", error_tag());
                             process::exit(1)
                         }
                     };
                     let by = get_android_element_by(selector.clone());
-                    let mut sp = start_spinner(format!("Tapping on: {:?}", selector));
+                    let sp = start_spinner(format!("Tapping on: {:?}", selector));
                     let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                     element.click().await.expect("Couldn't click on element");
                     sp.stop_with_symbol(&format!("{} Tapped on: {:?}", ok_tag(), selector.clone()));
@@ -237,7 +237,7 @@ pub async fn execute_android_steps(
                 }
             },
             Step::InputText { inputText } => {
-                let mut sp = start_spinner(format!("Inserting {} ", inputText,));
+                let sp = start_spinner(format!("Inserting {} ", inputText,));
                 client
                     .execute(
                         "mobile: type",
@@ -253,7 +253,7 @@ pub async fn execute_android_steps(
                 ));
             }
             Step::RunScript { runScript } => {
-                let mut sp = start_spinner(format!("Running script: {}", runScript));
+                let sp = start_spinner(format!("Running script: {}", runScript));
                 sp.stop_with_symbol(&format!("{} Ran script: {}", ok_tag(), runScript));
             }
             other => {
@@ -272,7 +272,7 @@ pub async fn execute_android_steps(
                 pause_action(duration).await;
             }
             AndroidAction::AssertVisible => {
-                let mut sp =
+                let sp =
                     start_spinner(format!("Asserting visible: {:?}", selector));
                 let element =
                     client.appium_wait().for_element(by.clone()).await.unwrap();
@@ -282,7 +282,7 @@ pub async fn execute_android_steps(
                 stop_spinner(&mut sp)
             }
             AndroidAction::TapOn => {
-                let mut sp = start_spinner(format!("Tapping on: {:?}", selector));
+                let sp = start_spinner(format!("Tapping on: {:?}", selector));
                 let element =
                     client.appium_wait().for_element(by.clone()).await.unwrap();
                 element.click().await.expect("Couldn't click on element");
@@ -290,17 +290,14 @@ pub async fn execute_android_steps(
                 stop_spinner(&mut sp)
             }
             AndroidAction::InsertData { data } => {
-                let mut sp = start_spinner(format!(
-                    "Inserting {} in field {:?}",
-                    data, selector
-                ));
+                let sp = start_spinner(format!("Inserting {} in field {:?}", data, selector));
                 let element =
                     client.appium_wait().for_element(by.clone()).await.unwrap();
                 element.send_keys(&data).await.unwrap();
                 stop_spinner(&mut sp)
             }
             AndroidAction::ScrollUntilVisible => {
-                let mut sp =
+                let sp =
                     start_spinner(format!("Scrolling until finding: {:?}", selector));
                 let swipe_down = TouchActions::new("finger".to_string())
                     .then(PointerAction::MoveTo {
@@ -339,7 +336,7 @@ pub async fn execute_android_steps(
     }
 }
 AndroidNormalStep::ScreenshotStep { take_screenshot } => {
-    let mut sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
+    let sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
     let screenshot = client.screenshot().await.unwrap();
     let mut file = File::create(&take_screenshot).unwrap();
     file.write_all(&screenshot).unwrap();

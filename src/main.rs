@@ -1,42 +1,56 @@
 use std::{
-    collections::HashMap, env, fs::File, io::{Read, Write}, path::Path, process, str::FromStr, time::Instant
+    collections::HashMap,
+    env,
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+    process,
+    time::Instant,
 };
 
 use chrono::Local;
 use colored::Colorize;
 use rust_pilot::{
     android::*,
-    common::{
-        tags::{error_tag, info_tag},
-        *,
-    },
+    common::{tags::*, *},
+    config::Config,
+    logger::Logger,
+    reporting::TestReport,
 };
 use serde_json::Value;
 
+const LOGO: &str = r#"
+  _____                  _     _____    _   _           _   
+ |  __ \                | |   |  __ \  (_) | |         | |  
+ | |__) |  _   _   ___  | |_  | |__) |  _  | |   ___   | |_ 
+ |  _  /  | | | | / __| | __| |  ___/  | | | |  / _ \  | __|
+ | | \ \  | |_| | \__ \ | |_  | |      | | | | | (_) | | |_ 
+ |_|  \_\  \__,_| |___/  \__| |_|      |_| |_|  \___/   \__|
+"#;
+
+const USAGE: &str = "Usage: rp <caps_file> <test_file>";
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args: Vec<String> = env::args().collect();
-    validate_args(&args)?;
+    display_startup_info();
 
-    print_spaces();
-    print_logo();
-    print_version();
-    print_spaces();
+    let (caps_path, test_file_path) = parse_command_line_args()?;
 
-    let caps_path = &args[1];
-    let file_path = &args[2];
+    Logger::info(format!("Caps file path: {}", caps_path));
+    Logger::info(format!("Test file path: {}", test_file_path));
 
-    println!("{} Caps file path: {}", info_tag(), caps_path.blue());
-    println!("{} Test file path: {}", info_tag(), file_path.blue());
+    let (_header, steps) = parse_test_file(&test_file_path);
 
-    let (_header, steps) = parse_test_file(&file_path);
-
-    let base_path = Path::new(file_path)
+    let base_path = Path::new(&test_file_path)
         .parent()
-        .expect("Failed to determine base path");
+        .ok_or("Failed to determine base path")?;
 
-    let mermaid_base_id = format!("idRoot0({})", base_path.display());
-    let (flattened_steps, _mermaid_steps) = flatten_steps(steps, base_path, mermaid_base_id).await;
+    let (flattened_steps, _) = flatten_steps(
+        steps,
+        base_path,
+        format!("idRoot0({})", base_path.display()),
+    )
+    .await;
 
     let mut caps_file = File::open(caps_path)?;
     let mut caps_contents = String::new();
@@ -76,16 +90,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let time = start.elapsed();
     let now = Local::now().format("%Y-%m-%d %H:%M:%S");
-    let full_report = format!(
-        "# Test suite report\n\n![LOGO](./assets/logo.webp)\n\nTest file: {}\n\nPlatform: Android\n\n🕒 Date and time {}\n\n✅ Steps executed {} successfully\n\n{}",
-        file_path, now, steps_count, report
-    );
-    let report_name = format!(
-        "reports/REPORT_{}.md",
-        Local::now().format("%Y-%m%d_%H-%M-%S")
-    );
 
-    write_report(&report_name, &full_report).unwrap_or_else(|e| {
+    let mut test_report = TestReport::new(test_file_path.clone(), "Android".to_string());
+    test_report.steps_executed = steps_count;
+    test_report.execution_time = time;
+    test_report.details = report;
+
+    let report_name = test_report.save().unwrap_or_else(|e| {
         eprintln!(
             "{} Error writing report file: {}",
             error_tag(),
@@ -101,47 +112,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn validate_args(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
-    if args.len() < 3 {
-        eprintln!("{} Missing arguments", error_tag());
-        eprintln!("{} Usage: rp <caps_file> <test_file>", error_tag());
-        process::exit(1);
-    }
-    Ok(())
-}
-
-fn print_spaces() {
+fn display_startup_info() {
+    // Reset indentation level for startup info
+    rust_pilot::common::set_current_indent_level(0);
+    println!();
+    println!("{}", LOGO.yellow());
+    Logger::info(format!("rust_pilot version: {}", env!("CARGO_PKG_VERSION")));
     println!();
 }
-fn print_logo() {
-    let logo = r#"
-  _____                  _     _____    _   _           _   
- |  __ \                | |   |  __ \  (_) | |         | |  
- | |__) |  _   _   ___  | |_  | |__) |  _  | |   ___   | |_ 
- |  _  /  | | | | / __| | __| |  ___/  | | | |  / _ \  | __|
- | | \ \  | |_| | \__ \ | |_  | |      | | | | | (_) | | |_ 
- |_|  \_\  \__,_| |___/  \__| |_|      |_| |_|  \___/   \__|
-                                                         "#;
-    println!("{}", logo.yellow());
-}
 
-fn print_version() {
-    let version = env!("CARGO_PKG_VERSION");
-    println!("rust_pilot version: {}", version);
-}
+fn parse_command_line_args() -> Result<(String, String), Box<dyn std::error::Error>> {
+    let args: Vec<String> = env::args().collect();
 
-fn write_report(report_name: &str, full_report: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut report_file = File::create(&report_name)?;
-    report_file.write_all(full_report.as_bytes())?;
-    Ok(())
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_validate_args() {
-        let args = vec!["rp".to_string()];
-        assert!(validate_args(&args).is_err());
+    if args.len() < 3 {
+        Logger::error("Missing arguments");
+        Logger::error(USAGE);
+        process::exit(1);
     }
+
+    Ok((args[1].clone(), args[2].clone()))
 }

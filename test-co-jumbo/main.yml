@@ -13,14 +13,6 @@ tags:
     hint: Contraseña
 - inputText: "Test1234"
 - tapOn: "Iniciar sesión"
-- tapOn: 
-    hint: "Calle y número, comuna o referencia"
-- inputText: "Calle 123"
-- tapOn:
-    description: ".*Buenos Aires.*"
-- tapOn: "Confirmar"
-- tapOn: 
-    hint: "Nombre de la dirección"
-- inputText: "Casa"
-- tapOn: "Agregar dirección"
+
+- runFlow: "login/add-address.yml"
 

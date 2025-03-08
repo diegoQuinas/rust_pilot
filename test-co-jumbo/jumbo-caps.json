@@ -1,7 +1,7 @@
 {
   "platformName": "android",
   "appium:app": "./app/app-dev-release.apk",
-  "platformVersion": "15",
+  "platformVersion": "10",
   "appium:automationName": "UiAutomator2",
   "appium:fullReset": true,
   "appium:appWaitActivity": "*",

@@ -1,12 +1,16 @@
 mod steps;
 
-use std::{self, collections::HashMap};
+use std::collections::HashMap;
 
-use appium_client::{capabilities::{self, android::AndroidCapabilities}, find::By, ClientBuilder};
+use appium_client::{
+    capabilities::{self, android::AndroidCapabilities},
+    find::By,
+    ClientBuilder,
+};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use spinners::Spinner;
+
 
 use appium_client::capabilities::{AppCapable, AppiumCapability};
 use steps::execute_android_steps;
@@ -80,7 +84,7 @@ pub enum AndroidElementSelector {
     },
     Index {
         index: u32,
-    }
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -106,7 +110,9 @@ pub fn set_custom_capabilities_android(
 
 pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
     match selector {
-        AndroidElementSelector::Index { index } => By::uiautomator(&format!("new UiSelector().index({});", index)),
+        AndroidElementSelector::Index { index } => {
+            By::uiautomator(&format!("new UiSelector().index({});", index))
+        }
         AndroidElementSelector::AccessibilityId { accessibilityId } => {
             By::accessibility_id(&accessibilityId)
         }
@@ -118,10 +124,9 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
             "new UiSelector().descriptionMatches(\"{}\");",
             description
         )),
-        AndroidElementSelector::Hint { hint } => By::xpath(&format!(
-            "//android.widget.EditText[@hint=\"{}\"]",
-            hint
-        )), 
+        AndroidElementSelector::Hint { hint } => {
+            By::xpath(&format!("//android.widget.EditText[@hint=\"{}\"]", hint))
+        }
         AndroidElementSelector::IdWithIndex { id, index } => By::uiautomator(&format!(
             "new UiSelector().resourceIdMatches(\"{}\").index({});",
             id, index
@@ -148,54 +153,57 @@ pub fn get_android_element_by(selector: AndroidElementSelector) -> By {
 pub async fn launch_android_main(
     capabilities: &HashMap<String, Value>,
     steps: Vec<Step>,
-) -> Result<(u32, String), Box<dyn std::error::Error>> {
+) -> Result<(usize, String), Box<dyn std::error::Error>> {
     // Configure the Appium driver
     let mut caps = AndroidCapabilities::new_uiautomator();
 
-    let app_path = capabilities.get("appium:app").expect("No app path found").as_str().unwrap();
+    let app_path = capabilities
+        .get("appium:app")
+        .expect("No app path found")
+        .as_str()
+        .unwrap();
     caps.app(&app_path);
 
-    caps.platform_version(&capabilities.get("platformVersion").expect("No platform version found").as_str().unwrap());
+    caps.platform_version(
+        &capabilities
+            .get("platformVersion")
+            .expect("No platform version found")
+            .as_str()
+            .unwrap(),
+    );
 
-    for (key,value) in capabilities.iter() {
+    for (key, value) in capabilities.iter() {
         match key.as_str() {
             "app" | "platformVersion" => continue,
-            _ => {
-                match value {
-                    Value::String(value) => {
-                        caps.set_str(key, value);
-                    }
-                    Value::Bool(value) => {
-                        caps.set_bool(key, *value);
-                    }
-                    _ => {
-                        eprintln!("{} Invalid value for key: {}", error_tag(), key);
-                        std::process::exit(1);
-                    }
+            _ => match value {
+                Value::String(value) => {
+                    caps.set_str(key, value);
                 }
-            }
+                Value::Bool(value) => {
+                    caps.set_bool(key, *value);
+                }
+                _ => {
+                    eprintln!("{} Invalid value for key: {}", error_tag(), key);
+                    std::process::exit(1);
+                }
+            },
         }
     }
-        
-    
 
-    println!("{} App path: {}", info_tag(), &capabilities.get("appium:app").unwrap().to_string().blue());
-    let mut spinner = Spinner::new(
-        spinners::Spinners::Arrow,
-        "Launching android app".to_string(),
+    println!(
+        "{} App path: {}",
+        info_tag(),
+        &capabilities.get("appium:app").unwrap().to_string().blue()
     );
+    println!("⏳ Launching android app");
     let client = ClientBuilder::native(caps)
         .connect("http://localhost:4723/")
         .await
         .unwrap_or_else(|e| {
-            spinner.stop_with_symbol(&format!(
-                "{} Failed to connect to Appium: {}",
-                error_tag(),
-                e
-            ));
+            println!("{} Failed to connect to Appium: {}", error_tag(), e);
             std::process::exit(1);
         });
-    spinner.stop_with_symbol("[LAUNCHED]");
+    println!("✓ Android app launched successfully");
 
     let (steps_count, report) = execute_android_steps(&client, steps).await;
     Ok((steps_count, report))

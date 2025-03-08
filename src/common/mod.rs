@@ -3,6 +3,7 @@ use std::io::Write;
 use std::path::Path;
 use std::process;
 use std::time::Duration;
+use std::cell::RefCell;
 
 use colored::Colorize;
 use fantoccini::Client;
@@ -10,11 +11,12 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 use serde_yaml::Deserializer;
-use spinners::Spinner;
+
 use tokio::time::sleep;
 
 pub mod tags;
 use tags::*;
+use crate::logger::Logger;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -150,13 +152,58 @@ pub enum CustomCapabilityValue {
 }
 
 pub async fn pause_action(duration: u64) {
-    let _sp = start_spinner(format!("Pausing for {duration} millis"));
+    println!("⏳ Pausing for {} millis", duration);
     let duration = Duration::from_millis(duration);
     sleep(duration).await;
+    println!("✓ Pause completed");
 }
 
-pub fn start_spinner(message: String) -> Spinner {
-    Spinner::new(spinners::Spinners::Dots, message)
+// Plain text logger instead of spinner
+pub struct PlainLogger {
+    pub message: String,
+    pub indent_level: usize,
+}
+
+// Global indentation level for nested steps
+thread_local! {
+    static CURRENT_INDENT_LEVEL: RefCell<usize> = RefCell::new(0);
+}
+
+pub fn get_current_indent_level() -> usize {
+    CURRENT_INDENT_LEVEL.with(|level| *level.borrow())
+}
+
+pub fn set_current_indent_level(level: usize) {
+    CURRENT_INDENT_LEVEL.with(|current_level| *current_level.borrow_mut() = level);
+}
+
+pub fn start_spinner(message: String) -> PlainLogger {
+    let indent_level = get_current_indent_level();
+    if indent_level > 0 {
+        crate::logger::Logger::step_with_indent(message.clone(), indent_level);
+    } else {
+        crate::logger::Logger::step(message.clone());
+    }
+    PlainLogger { message, indent_level }
+}
+
+pub fn stop_spinner(logger: &mut PlainLogger) {
+    let message = format!("{} - Completed", logger.message);
+    if logger.indent_level > 0 {
+        crate::logger::Logger::success_with_indent(message, logger.indent_level);
+    } else {
+        crate::logger::Logger::success(message);
+    }
+}
+
+impl PlainLogger {
+    pub fn stop_with_symbol(&self, message: &str) {
+        if self.indent_level > 0 {
+            crate::logger::Logger::info_with_indent(message, self.indent_level);
+        } else {
+            crate::logger::Logger::info(message);
+        }
+    }
 }
 
 /// Flattens a list of steps, resolving any `RunFlow` steps recursively.
@@ -164,6 +211,17 @@ pub async fn flatten_steps(
     steps: Vec<Step>,
     base_path: &Path,
     mermaid_parent_id: String,
+) -> (Vec<Step>, String) {
+    // Call the internal function with indent level 0
+    flatten_steps_with_indent(steps, base_path, mermaid_parent_id, 0).await
+}
+
+/// Internal implementation of flatten_steps that tracks the indentation level
+async fn flatten_steps_with_indent(
+    steps: Vec<Step>,
+    base_path: &Path,
+    mermaid_parent_id: String,
+    indent_level: usize,
 ) -> (Vec<Step>, String) {
     let mut flattened_steps: Vec<Step> = Vec::new();
     let mut mermaid_steps = String::new();
@@ -176,14 +234,15 @@ pub async fn flatten_steps(
                 mermaid_steps.push_str(&format!("{} --> {}\n", mermaid_parent_id, id));
                 let step_path = base_path.join(&runFlow);
                 let string_path = step_path.display().to_string();
-                println!("{} Loading step file {}", info_tag(), string_path.blue());
+                
+                // Use indented logging
+                Logger::info_with_indent(format!("Loading step file {}", string_path.blue()), indent_level);
 
                 // Verificar existencia del archivo
                 if !step_path.exists() {
-                    eprintln!(
-                        "{} Error: File {} does not exist",
-                        error_tag(),
-                        step_path.display()
+                    Logger::error_with_indent(
+                        format!("Error: File {} does not exist", step_path.display()),
+                        indent_level
                     );
                     process::exit(1);
                 }
@@ -191,16 +250,63 @@ pub async fn flatten_steps(
                 // Parsear el archivo de pasos
                 let (_, steps) = parse_test_file(&step_path);
 
-                // Recursivamente aplanar los pasos del archivo cargado
+                // Store the current indentation level for the nested steps
+                let next_indent_level = indent_level + 1;
+                
+                // Recursivamente aplanar los pasos del archivo cargado con un nivel más de indentación
                 let (sub_steps, mermaid_sub_steps) =
-                    Box::pin(flatten_steps(steps, step_path.parent().unwrap(), id)).await;
-                flattened_steps.extend(sub_steps);
+                    Box::pin(flatten_steps_with_indent(
+                        steps, 
+                        step_path.parent().unwrap(), 
+                        id,
+                        next_indent_level // Increase indent level for nested steps
+                    )).await;
+                
+                // Add the indentation level to each step
+                let mut indented_steps: Vec<Step> = Vec::new();
+                for step in sub_steps {
+                    // Store the indentation level in the step metadata
+                    let step_with_indent = match step {
+                        Step::RunFlow { runFlow } => Step::RunFlow { runFlow },
+                        Step::TapOn { tapOn } => {
+                            // Set the indentation level for this step
+                            set_current_indent_level(next_indent_level);
+                            Step::TapOn { tapOn }
+                        },
+                        Step::RunScript { runScript } => {
+                            set_current_indent_level(next_indent_level);
+                            Step::RunScript { runScript }
+                        },
+                        Step::InputText { inputText } => {
+                            set_current_indent_level(next_indent_level);
+                            Step::InputText { inputText }
+                        },
+                        Step::AssertVisible { assertVisible } => {
+                            set_current_indent_level(next_indent_level);
+                            Step::AssertVisible { assertVisible }
+                        },
+                        Step::AssertNotVisible { assertNotVisible } => {
+                            set_current_indent_level(next_indent_level);
+                            Step::AssertNotVisible { assertNotVisible }
+                        },
+                        Step::LaunchApp { launchApp } => {
+                            set_current_indent_level(next_indent_level);
+                            Step::LaunchApp { launchApp }
+                        },
+                        Step::Swipe { swipe } => {
+                            set_current_indent_level(next_indent_level);
+                            Step::Swipe { swipe }
+                        },
+                    };
+                    indented_steps.push(step_with_indent);
+                }
+                
+                flattened_steps.extend(indented_steps);
 
                 let string_path = step_path.display().to_string();
-                println!(
-                    "{} Steps from {} loaded successfully",
-                    ok_tag(),
-                    string_path.blue()
+                Logger::success_with_indent(
+                    format!("Steps from {} loaded successfully", string_path.blue()),
+                    indent_level
                 );
                 mermaid_steps.push_str(&mermaid_sub_steps);
             }
@@ -210,6 +316,15 @@ pub async fn flatten_steps(
                 let step_name: String = step_name.split_whitespace().next().unwrap().to_string();
                 let node = format!("idStepName{}({})", now, step_name);
                 mermaid_steps.push_str(&format!("{} --> {}\n", mermaid_parent_id, node));
+                
+                // For top-level steps (indent_level == 0), we need to set the indentation level to 0
+                // For nested steps, the indentation level is already set in the RunFlow branch
+                if indent_level == 0 {
+                    set_current_indent_level(0);
+                } else {
+                    set_current_indent_level(indent_level);
+                }
+                
                 flattened_steps.push(step);
             }
         }
@@ -219,15 +334,22 @@ pub async fn flatten_steps(
 }
 
 pub async fn error_take_screenshot(client: &Client) {
+    // Set indentation level to 0 for error screenshots
+    set_current_indent_level(0);
+    crate::logger::Logger::error("Taking error screenshot");
     take_screenshot(client, "error_screenshot.png").await;
 }
 
 pub async fn take_screenshot(client: &Client, take_screenshot: &str) {
-    let mut sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
+    // Use the Logger for consistent formatting
+    let indent_level = get_current_indent_level();
+    crate::logger::Logger::step_with_indent(format!("Taking screenshot: {}", take_screenshot), indent_level);
+    
     let screenshot = client.screenshot().await.unwrap();
     let mut file = File::create(&take_screenshot).unwrap();
     file.write_all(&screenshot).unwrap();
-    sp.stop_with_symbol(&format!("{} Screenshot taken", ok_tag()));
+    
+    crate::logger::Logger::success_with_indent("Screenshot taken", indent_level);
 }
 
 pub fn parse_test_file<P: AsRef<Path>>(path: P) -> (TestFileHeader, Vec<Step>) {

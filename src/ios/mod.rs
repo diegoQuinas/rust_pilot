@@ -16,7 +16,7 @@ use fantoccini::{
     actions::{InputSource, PointerAction, TouchActions, MOUSE_BUTTON_LEFT},
     Client,
 };
-use spinners::Spinner;
+
 use tokio::time::{timeout, Duration};
 
 use crate::common::*;
@@ -115,11 +115,11 @@ pub async fn launch_ios_main(
     };
 
     println!("App path: {}", capabilities.app_path);
-    let mut spinner = Spinner::new(spinners::Spinners::Arrow, "Launching ios app".to_string());
+    println!("⏳ Launching iOS app");
     let client = ClientBuilder::native(caps)
         .connect("http://localhost:4723/")
         .await?;
-    spinner.stop_with_symbol("[LAUNCHED]");
+    println!("✓ iOS app launched successfully");
 
     let mut steps_count = 0;
     // Let's calculate some things first
@@ -138,7 +138,7 @@ pub async fn launch_ios_main(
     for step in steps {
         match step {
             IosNormalStep::ScreenshotStep { take_screenshot } => {
-                let mut sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
+                let sp = start_spinner(format!("Taking screenshot: {}", take_screenshot));
                 let screenshot = client.screenshot().await.unwrap();
                 let mut file = File::create(&take_screenshot).unwrap();
                 file.write_all(&screenshot).unwrap();
@@ -183,7 +183,7 @@ pub async fn ios_perform_actions(
                 pause_action(duration).await;
             }
             IosAction::AssertVisible => {
-                let mut sp = start_spinner(format!("Asserting visible: {:?}", selector));
+                let sp = start_spinner(format!("Asserting visible: {:?}", selector));
                 let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                 let is_visible = element.is_displayed().await.unwrap();
                 assert!(is_visible);
@@ -191,20 +191,20 @@ pub async fn ios_perform_actions(
                 stop_spinner(&mut sp)
             }
             IosAction::TapOn => {
-                let mut sp = start_spinner(format!("Tapping on: {:?}", selector));
+                let sp = start_spinner(format!("Tapping on: {:?}", selector));
                 let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                 element.click().await.expect("Couldn't click on element");
                 steps_count += 1;
                 stop_spinner(&mut sp)
             }
             IosAction::InsertData { data } => {
-                let mut sp = start_spinner(format!("Inserting {} in field {:?}", data, selector));
+                let sp = start_spinner(format!("Inserting {} in field {:?}", data, selector));
                 let element = client.appium_wait().for_element(by.clone()).await.unwrap();
                 element.send_keys(&data).await.unwrap();
                 stop_spinner(&mut sp)
             }
             IosAction::ScrollUntilVisible => {
-                let mut sp = start_spinner(format!("Scrolling until finding: {:?}", selector));
+                let sp = start_spinner(format!("Scrolling until finding: {:?}", selector));
                 let swipe_down = TouchActions::new("finger".to_string())
                     .then(PointerAction::MoveTo {
                         duration: Some(Duration::from_millis(0)),
@@ -249,7 +249,7 @@ pub async fn ios_transform_into_actions(steps: Vec<IosStep>) -> Vec<IosNormalSte
         match step {
             IosStep::IosNormalStep(normal_step) => result.push(normal_step),
             IosStep::IosStepFile { step_file } => {
-                let mut spinner = start_spinner(format!("Loading step file: {}", step_file));
+                let spinner = start_spinner(format!("Loading step file: {}", step_file));
                 // Load the YAML file
                 let mut file = File::open(&step_file).unwrap();
                 let mut contents = String::new();
