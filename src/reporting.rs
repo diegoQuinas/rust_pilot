@@ -1,5 +1,5 @@
 use chrono::Local;
-use std::{fs::File, io::Write, time::Duration};
+use std::{fs::{self, File}, io::Write, path::Path, time::Duration};
 
 pub struct TestReport {
     pub test_file: String,
@@ -42,6 +42,12 @@ impl TestReport {
     }
 
     pub fn save(&self) -> Result<String, Box<dyn std::error::Error>> {
+        // Ensure reports directory exists
+        let reports_dir = Path::new("reports");
+        if !reports_dir.exists() {
+            fs::create_dir(reports_dir)?;
+        }
+        
         let report_name = format!(
             "reports/REPORT_{}.md",
             Local::now().format("%Y%m%d_%H-%M-%S")

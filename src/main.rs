@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     env,
     fs::File,
-    io::{Read, Write},
+    io::Read,
     path::Path,
     process,
     time::Instant,
@@ -13,7 +13,7 @@ use colored::Colorize;
 use rust_pilot::{
     android::*,
     common::{tags::*, *},
-    config::Config,
+
     logger::Logger,
     reporting::TestReport,
 };
@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let time = start.elapsed();
-    let now = Local::now().format("%Y-%m-%d %H:%M:%S");
+    let _now = Local::now().format("%Y-%m-%d %H:%M:%S");
 
     let mut test_report = TestReport::new(test_file_path.clone(), "Android".to_string());
     test_report.steps_executed = steps_count;

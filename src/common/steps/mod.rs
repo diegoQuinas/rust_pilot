@@ -4,7 +4,7 @@ use chrono;
 use colored::Colorize;
 
 use crate::common::models::Step;
-use crate::common::utils::{get_current_indent_level, parse_test_file, set_current_indent_level};
+use crate::common::utils::{parse_test_file, set_current_indent_level};
 use crate::logger::Logger;
 
 /// Flattens a list of steps, resolving any `RunFlow` steps recursively.

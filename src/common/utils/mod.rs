@@ -8,7 +8,7 @@ use std::process;
 use std::time::Duration;
 
 // Removed unused import: colored::Colorize
-use appium_client::Client;
+
 use fantoccini::Client as FantoClient;
 use serde::de::DeserializeOwned;
 use serde_yaml;
