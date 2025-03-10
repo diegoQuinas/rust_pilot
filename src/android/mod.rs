@@ -1,5 +1,8 @@
 mod steps;
 
+#[cfg(test)]
+mod mod_test;
+
 use std::collections::HashMap;
 
 use appium_client::capabilities::android::AndroidCapabilities;

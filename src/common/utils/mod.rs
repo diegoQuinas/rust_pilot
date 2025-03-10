@@ -1,5 +1,8 @@
 //! Utility functions for the common module
 
+#[cfg(test)]
+mod test;
+
 use std::cell::RefCell;
 use std::fs::{self, File};
 use std::io::Write;

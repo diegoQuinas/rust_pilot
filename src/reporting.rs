@@ -42,14 +42,19 @@ impl TestReport {
     }
 
     pub fn save(&self) -> Result<String, Box<dyn std::error::Error>> {
-        // Ensure reports directory exists
-        let reports_dir = Path::new("reports");
-        if !reports_dir.exists() {
-            fs::create_dir(reports_dir)?;
+        self.save_to_dir("reports")
+    }
+
+    pub fn save_to_dir(&self, dir_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        // Ensure directory exists
+        let dir_path = Path::new(dir_name);
+        if !dir_path.exists() {
+            fs::create_dir(dir_path)?;
         }
         
         let report_name = format!(
-            "reports/REPORT_{}.md",
+            "{}/REPORT_{}.md",
+            dir_name,
             Local::now().format("%Y%m%d_%H-%M-%S")
         );
         
