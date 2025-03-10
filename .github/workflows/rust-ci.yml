@@ -1,4 +1,4 @@
-name: Code Coverage
+name: Rust CI
 
 on:
   push:
@@ -10,9 +10,25 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
+  
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -31,6 +47,3 @@ jobs:
           cargo tarpaulin --verbose --workspace --timeout 120 --out Xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
-        # Optional: uncomment the following line when you have a Codecov token
-        # with:
-        #   token: ${{ secrets.CODECOV_TOKEN }}
