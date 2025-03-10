@@ -28,20 +28,21 @@ RustPilot acts as an intermediary between your test definitions and the Appium a
 ```mermaid
 flowchart TD
     %% Class definitions for styling
-    classDef engineer fill:#f9d5e5,stroke:#333,stroke-width:1px
-    classDef yaml fill:#eeeeee,stroke:#333,stroke-width:1px
-    classDef rustpilot fill:#d0f4de,stroke:#333,stroke-width:1px,color:#333
-    classDef client fill:#e4c1f9,stroke:#333,stroke-width:1px
-    classDef server fill:#a9def9,stroke:#333,stroke-width:1px
-    classDef device fill:#fcf6bd,stroke:#333,stroke-width:1px
+    classDef engineer fill:#f9d5e5,stroke:#333,stroke-width:1px,color:black,font-weight:bold
+    classDef yaml fill:#eeeeee,stroke:#333,stroke-width:1px,color:black,font-weight:bold
+    classDef rustpilot fill:#d0f4de,stroke:#333,stroke-width:1px,color:black,font-weight:bold
+    classDef client fill:#e4c1f9,stroke:#333,stroke-width:1px,color:black,font-weight:bold
+    classDef server fill:#a9def9,stroke:#333,stroke-width:1px,color:black,font-weight:bold
+    classDef device fill:#fcf6bd,stroke:#333,stroke-width:1px,color:black,font-weight:bold
+    classDef edgeLabel color:black,font-weight:bold
     
-    QA[QA Engineer] -->|writes| YAML[Tests in YAML]
-    YAML -->|read by| RP[RustPilot]
-    RP -->|uses| ARC[Appium Rust Client]
-    ARC -->|sends HTTP requests| AS[Appium Server]
-    AS -->|interacts with| Android[Android Device]
-    AS -->|interacts with| iOS[iOS Device]
-    AS -->|interacts with| Flutter[Flutter App]
+    QA["<b>QA Engineer</b>"] -->|"<b>writes</b>"| YAML["<b>Tests in YAML</b>"]
+    YAML -->|"<b>read by</b>"| RP["<b>RustPilot</b>"]
+    RP -->|"<b>uses</b>"| ARC["<b>Appium Rust Client</b>"]
+    ARC -->|"<b>sends HTTP requests</b>"| AS["<b>Appium Server</b>"]
+    AS -->|"<b>interacts with</b>"| Android["<b>Android Device</b>"]
+    AS -->|"<b>interacts with</b>"| iOS["<b>iOS Device</b>"]
+    AS -->|"<b>interacts with</b>"| Flutter["<b>Flutter App</b>"]
     
     %% Apply classes to nodes
     QA:::engineer
@@ -52,6 +53,9 @@ flowchart TD
     Android:::device
     iOS:::device
     Flutter:::device
+    
+    %% Apply style to all edge labels
+    linkStyle 0,1,2,3,4,5,6 stroke-width:1.5px,fill:none,stroke:#333
 ```
 
 RustPilot reads your YAML test files (which are compatible with Maestro-style test instructions), processes them, and uses the Appium Rust client to communicate with the Appium server for executing test actions on your target devices.
