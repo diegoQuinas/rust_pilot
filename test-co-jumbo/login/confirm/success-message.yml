@@ -1,0 +1,6 @@
+tags:
+  - android
+  - passing
+---
+- assertVisible: "Dirección agregada con éxito"
+- tapOn: "Continuar"

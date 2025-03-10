@@ -1,0 +1,8 @@
+tags:
+  - android
+  - passing
+---
+- tapOn: 
+    hint: "Nombre de la dirección"
+- inputText: "Casa"
+- tapOn: "Agregar dirección"

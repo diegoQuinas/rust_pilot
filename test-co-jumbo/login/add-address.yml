@@ -1,0 +1,11 @@
+tags:
+  - android
+  - passing
+---
+- tapOn: 
+    hint: "Calle y número, comuna o referencia"
+- inputText: "Calle 123"
+- tapOn:
+    description: ".*Buenos Aires.*"
+- tapOn: "Confirmar"
+- runFlow: "confirm/confirm-address.yml"

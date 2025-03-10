@@ -1,0 +1,14 @@
+{
+  "platformName": "android",
+  "appium:app": "./app/app-dev-release.apk",
+  "platformVersion": "10",
+  "appium:automationName": "UiAutomator2",
+  "appium:fullReset": true,
+  "appium:appWaitActivity": "*",
+  "appium:autoGrantPermissions": true,
+  "appium:dontStopAppOnReset": true,
+  "appium:suppressKillServer": true,
+  "appium:settings[allowInvisibleElements]": true,
+  "appium:settings[ignoreUnimportantViews]": false,
+  "appium:settings[enableMultiWindows]": true
+}

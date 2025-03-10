@@ -1,0 +1,21 @@
+appId: com.cencosud.jumbo.co.test
+tags:
+  - android
+  - passing
+---
+- launchApp:
+    clearState: true
+#- runFlow: "onboarding/main.yml"
+- tapOn: RUT o Email
+- inputText: "testingapp123456@yopmail.com"
+- tapOn: Contraseña
+- inputText: "Test1234"
+- tapOn: "Iniciar sesión"
+- tapOn: "Calle y número, comuna o referencia"
+- inputText: "Calle 123"
+- tapOn: ".*Buenos Aires.*"
+- tapOn: "Confirmar"
+- tapOn: "Nombre de la dirección"
+- inputText: "Casa"
+- tapOn: "Agregar dirección"
+
