@@ -1,15 +1,15 @@
-![RustPilotLogo](./assets/RustPilotLogo.png)
+![rust_pilot_logo](./assets/RustPilotLogo.png)
 
 [![Rust CI](https://github.com/diegoQuinas/RustPilot/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/diegoQuinas/RustPilot/actions/workflows/rust-ci.yml)
 [![Code Coverage](https://codecov.io/gh/diegoQuinas/RustPilot/branch/main/graph/badge.svg)](https://codecov.io/gh/diegoQuinas/RustPilot)
 [![Crates.io](https://img.shields.io/crates/v/rustpilot.svg)](https://crates.io/crates/rustpilot)
 [![Rust Version](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org)
 
-# RustPilot
+# rust_pilot
 
-## What is RustPilot?
+## What is rust_pilot?
 
-RustPilot is a powerful, fast, and reliable tool for automating mobile application testing. It supports Android, iOS, and Flutter applications with a simple YAML-based test definition format.
+rust_pilot is a powerful, fast, and reliable tool for automating mobile application testing. It supports Android, iOS, and Flutter applications with a simple YAML-based test definition format.
 
 **Key Features:**
 - Write tests in simple, readable YAML format
@@ -23,7 +23,7 @@ RustPilot is a powerful, fast, and reliable tool for automating mobile applicati
 
 ## How It Works
 
-RustPilot acts as an intermediary between your test definitions and the Appium automation framework:
+rust_pilot acts as an intermediary between your test definitions and the Appium automation framework:
 
 ```mermaid
 flowchart TD
@@ -37,7 +37,7 @@ flowchart TD
     classDef edgeLabel color:black,font-weight:bold
     
     QA["<b>QA Engineer</b>"] -->|"<b>writes</b>"| YAML["<b>Tests in YAML</b>"]
-    YAML -->|"<b>read by</b>"| RP["<b>RustPilot</b>"]
+    YAML -->|"<b>read by</b>"| RP["<b>rust_pilot</b>"]
     RP -->|"<b>uses</b>"| ARC["<b>Appium Rust Client</b>"]
     ARC -->|"<b>sends HTTP requests</b>"| AS["<b>Appium Server</b>"]
     AS -->|"<b>interacts with</b>"| Android["<b>Android Device</b>"]
@@ -58,7 +58,7 @@ flowchart TD
     linkStyle 0,1,2,3,4,5,6 stroke-width:1.5px,fill:none,stroke:#333
 ```
 
-RustPilot reads your YAML test files (which are compatible with Maestro-style test instructions), processes them, and uses the Appium Rust client to communicate with the Appium server for executing test actions on your target devices.
+rust_pilot reads your YAML test files (which are compatible with Maestro-style test instructions), processes them, and uses the Appium Rust client to communicate with the Appium server for executing test actions on your target devices.
 
 ## Example Test File
 
@@ -93,7 +93,7 @@ tags:
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/diegoQuinas/RustPilot.git
-   cd RustPilot
+   cd rust_pilot
    ```
 
 2. **Build the project:**
@@ -123,7 +123,7 @@ cargo run -- <capabilities_file.json> <test_file.yml>
 
 ## Test Reports
 
-RustPilot automatically generates test reports after execution. Reports are saved in the `reports` directory and include:
+rust_pilot automatically generates test reports after execution. Reports are saved in the `reports` directory and include:
 - Test execution summary
 - Steps executed
 - Execution time
