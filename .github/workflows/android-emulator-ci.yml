@@ -1,0 +1,105 @@
+name: Android Emulator CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  android-test:
+    name: Run Wikipedia Showcase Test
+    runs-on: macos-latest # Using macOS runner for better Android emulator performance
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      
+      - name: Cache Rust dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      
+      - name: Build RustPilot
+        run: cargo build --release
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+      
+      - name: Install Appium
+        run: |
+          npm install -g appium@2.0.0
+          npm install -g appium-uiautomator2-driver
+          appium driver install uiautomator2
+      
+      - name: Start Appium Server
+        run: |
+          appium --log appium.log &
+          echo "Waiting for Appium to start..."
+          sleep 10
+      
+      - name: Create AVD and start emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          profile: pixel
+          avd-name: test-emulator
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            echo "Emulator started successfully"
+            adb devices
+            
+            # Download Wikipedia APK if not present
+            if [ ! -f "./app/wikipedia.apk" ]; then
+              mkdir -p ./app
+              curl -L -o ./app/wikipedia.apk https://github.com/wikimedia/apps-android-wikipedia/releases/download/latest/app-alpha-universal-release.apk
+            fi
+            
+            # Convert YAML to JSON for RustPilot
+            echo "Converting capabilities file to JSON..."
+            python -c "import yaml, json, sys; y=yaml.safe_load(open('./showcase-wikipedia-android/wikipedia.android.caps.yaml')); json.dump(y, open('./showcase-wikipedia-android/wikipedia.android.caps.json', 'w'))"
+            
+            # Run the test
+            echo "Running RustPilot test..."
+            ./target/release/rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.json ./showcase-wikipedia-android/run-test.yml
+      
+      - name: Upload test report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            reports/
+            appium.log
+      
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: screenshots
+          path: |
+            *.png
