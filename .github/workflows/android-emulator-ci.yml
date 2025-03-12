@@ -71,7 +71,7 @@ jobs:
             "platform-tools" \
             "platforms;android-28" \
             "build-tools;30.0.3" \
-            "system-images;android-28;default;x86_64" \
+            "system-images;android-28;google_apis;arm64-v8a" \
             "emulator"
           
           # Verify installation
@@ -112,15 +112,15 @@ jobs:
           fi
           
           # Verify system image is installed
-          if [ ! -d "$ANDROID_HOME/system-images/android-28/default/x86_64" ]; then
+          if [ ! -d "$ANDROID_HOME/system-images/android-28/google_apis/arm64-v8a" ]; then
             echo "System image not found, installing system image"
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose "system-images;android-28;default;x86_64"
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose "system-images;android-28;google_apis;arm64-v8a"
           fi
           
           echo "Creating AVD with optimized settings"
           echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
             --name test-emulator \
-            --package "system-images;android-28;default;x86_64" \
+            --package "system-images;android-28;google_apis;arm64-v8a" \
             --device "pixel" \
             --force
           
@@ -142,6 +142,10 @@ jobs:
         run: |
           # Verify emulator binary exists
           ls -la $ANDROID_HOME/emulator/
+          
+          # Print system architecture for debugging
+          echo "System architecture:"
+          uname -a
           
           # Start emulator in background with more basic options first
           echo "Starting emulator in background"
