@@ -91,19 +91,22 @@ jobs:
             echo "Running RustPilot test..."
             ./target/release/rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.json ./showcase-wikipedia-android/run-test.yml
       
-      - name: Upload test report
-        uses: actions/upload-artifact@v2
+      # Archive test reports and logs as part of the workflow summary
+      - name: Archive test artifacts
         if: always()
-        with:
-          name: test-reports
-          path: |
-            reports/
-            appium.log
-      
-      - name: Upload screenshots
-        uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: screenshots
-          path: |
-            *.png
+        run: |
+          mkdir -p artifacts/test-reports
+          mkdir -p artifacts/screenshots
+          
+          # Copy reports and logs
+          cp -r reports/* artifacts/test-reports/ || echo "No reports found"
+          cp appium.log artifacts/test-reports/ || echo "No Appium log found"
+          
+          # Copy screenshots
+          cp *.png artifacts/screenshots/ || echo "No screenshots found"
+          
+          # List artifacts for verification
+          echo "Test artifacts:"
+          ls -la artifacts/test-reports/
+          echo "Screenshot artifacts:"
+          ls -la artifacts/screenshots/
