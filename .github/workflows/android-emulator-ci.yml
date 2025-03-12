@@ -93,23 +93,88 @@ jobs:
           python -c "import yaml, json, sys; y=yaml.safe_load(open('./showcase-wikipedia-android/wikipedia.android.caps.yaml')); json.dump(y, open('./showcase-wikipedia-android/wikipedia.android.caps.json', 'w'))"
           cat ./showcase-wikipedia-android/wikipedia.android.caps.json
       
-      - name: Create AVD and start emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 28
-          target: default
-          arch: x86_64
-          profile: Nexus 6
-          avd-name: test-emulator
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          disable-animations: true
-          script: |
-            echo "Emulator started successfully"
-            adb devices
+      - name: Create and configure AVD
+        run: |
+          echo "Creating AVD with optimized settings"
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+            --name test-emulator \
+            --package "system-images;android-28;default;x86_64" \
+            --device "pixel" \
+            --force
+          
+          # Optimize AVD config for faster boot
+          echo "Configuring AVD for faster boot"
+          echo 'hw.ramSize=2048' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'hw.cpu.ncore=2' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'hw.gpu.enabled=yes' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'hw.gpu.mode=swiftshader_indirect' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'disk.dataPartition.size=2048M' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'hw.lcd.density=240' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'hw.lcd.height=800' >> ~/.android/avd/test-emulator.avd/config.ini
+          echo 'hw.lcd.width=480' >> ~/.android/avd/test-emulator.avd/config.ini
+          
+          # List available AVDs
+          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd
+      
+      - name: Start emulator and run tests
+        run: |
+          # Start emulator in background
+          echo "Starting emulator in background"
+          nohup $ANDROID_HOME/emulator/emulator \
+            -avd test-emulator \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect \
+            -no-snapshot \
+            -memory 2048 \
+            -accel on \
+            -cores 2 \
+            -skin 480x800 \
+            -qemu -m 2048 &
+          
+          # Wait for emulator to boot with a more robust approach
+          echo "Waiting for emulator to boot..."
+          max_attempts=30
+          attempt=0
+          boot_completed=false
+          
+          while [ $attempt -lt $max_attempts ] && [ "$boot_completed" = false ]; do
+            attempt=$((attempt+1))
+            echo "Boot attempt $attempt of $max_attempts"
             
-            # Run the test
-            echo "Running RustPilot test..."
-            ./target/release/rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.json ./showcase-wikipedia-android/run-test.yml
+            # Check if adb is available
+            $ANDROID_HOME/platform-tools/adb devices
+            
+            # Check if device is online
+            if $ANDROID_HOME/platform-tools/adb devices | grep -q emulator; then
+              echo "Emulator detected in device list"
+              
+              # Check boot_completed property
+              boot_prop=$($ANDROID_HOME/platform-tools/adb shell getprop sys.boot_completed 2>&1 || echo "")
+              if [ "$boot_prop" = "1" ]; then
+                echo "Emulator boot completed!"
+                boot_completed=true
+                break
+              fi
+            fi
+            
+            # Wait before next attempt
+            sleep 10
+          done
+          
+          if [ "$boot_completed" = false ]; then
+            echo "Emulator failed to boot after $max_attempts attempts"
+            exit 1
+          fi
+          
+          # Show emulator status
+          $ANDROID_HOME/platform-tools/adb devices
+          $ANDROID_HOME/platform-tools/adb shell getprop
+          
+          # Run the test
+          echo "Running RustPilot test..."
+          ./target/release/rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.json ./showcase-wikipedia-android/run-test.yml
       
       # Archive test reports and logs as part of the workflow summary
       - name: Archive test artifacts
