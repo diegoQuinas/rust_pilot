@@ -14,17 +14,11 @@ env:
 jobs:
   android-test:
     name: Run Wikipedia Showcase Test
-    runs-on: macos-latest # Using macOS runner for better Android emulator performance
+    runs-on: ubuntu-latest # Using Ubuntu for Docker support
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
       
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -45,161 +39,89 @@ jobs:
       - name: Build RustPilot
         run: cargo build --release
       
-      - name: Setup Android SDK
-        run: |
-          echo "Installing Android SDK components manually"
-          export ANDROID_HOME=$HOME/android-sdk
-          mkdir -p $ANDROID_HOME
-          
-          # Download and install command line tools
-          CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-mac-9477386_latest.zip"
-          curl -L $CMDLINE_TOOLS_URL -o cmdline-tools.zip
-          unzip -q cmdline-tools.zip -d $ANDROID_HOME
-          mkdir -p $ANDROID_HOME/cmdline-tools/latest
-          mv $ANDROID_HOME/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/ || true
-          rm -rf cmdline-tools.zip
-          
-          # Set up environment variables
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          
-          # Install required Android SDK components
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          echo "Installing Android SDK components..."
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose \
-            "platform-tools" \
-            "platforms;android-28" \
-            "build-tools;30.0.3" \
-            "system-images;android-28;google_apis;arm64-v8a" \
-            "emulator"
-          
-          # Verify installation
-          echo "Verifying installed packages:"
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed
-      
-      - name: Install Appium
-        run: |
-          npm install -g appium@$APPIUM_VERSION
-          npm install -g appium-uiautomator2-driver
-          appium driver install uiautomator2
-          appium --version
-      
-      - name: Start Appium Server
-        run: |
-          appium --log appium.log &
-          echo "Waiting for Appium to start..."
-          sleep 10
-      
       - name: Download Wikipedia APK
         run: |
           mkdir -p ./app
           curl -L -o ./app/wikipedia.apk https://github.com/wikimedia/apps-android-wikipedia/releases/download/latest/app-alpha-universal-release.apk
           ls -la ./app/
       
-      - name: Convert YAML to JSON
+      # Removed YAML to JSON conversion step as we now use a JSON file directly
+      
+      - name: Modify capabilities for Docker environment
         run: |
-          pip install pyyaml
-          python -c "import yaml, json, sys; y=yaml.safe_load(open('./showcase-wikipedia-android/wikipedia.android.caps.yaml')); json.dump(y, open('./showcase-wikipedia-android/wikipedia.android.caps.json', 'w'))"
+          # Update the capabilities file to work with Docker environment
+          python -c '
+          import json
+          with open("./showcase-wikipedia-android/wikipedia.android.caps.json", "r") as f:
+              caps = json.load(f)
+          
+          # Update capabilities for Docker environment
+          caps["appium:platformVersion"] = "11.0"
+          caps["appium:app"] = "/app/wikipedia.apk"
+          
+          with open("./showcase-wikipedia-android/wikipedia.android.caps.json", "w") as f:
+              json.dump(caps, f, indent=2)
+          '
+          
+          # Show updated capabilities
           cat ./showcase-wikipedia-android/wikipedia.android.caps.json
       
-      - name: Create and configure AVD
+      - name: Run tests in Android Docker container
         run: |
-          # Verify emulator is installed
-          if [ ! -d "$ANDROID_HOME/emulator" ]; then
-            echo "Emulator directory not found, installing emulator package"
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose "emulator"
-          fi
+          # Create a Docker network for communication between containers
+          docker network create appium-network
           
-          # Verify system image is installed
-          if [ ! -d "$ANDROID_HOME/system-images/android-28/google_apis/arm64-v8a" ]; then
-            echo "System image not found, installing system image"
-            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose "system-images;android-28;google_apis;arm64-v8a"
-          fi
+          # Start Appium server in a container
+          docker run -d --network appium-network --name appium-server \
+            -p 4723:4723 \
+            -e APPIUM_HOST=0.0.0.0 \
+            -e APPIUM_LOG_LEVEL=debug \
+            appium/appium:latest
           
-          echo "Creating AVD with optimized settings"
-          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
-            --name test-emulator \
-            --package "system-images;android-28;google_apis;arm64-v8a" \
-            --device "pixel" \
-            --force
+          # Wait for Appium server to start
+          echo "Waiting for Appium server to start..."
+          sleep 10
           
-          # Optimize AVD config for faster boot
-          echo "Configuring AVD for faster boot"
-          echo 'hw.ramSize=2048' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'hw.cpu.ncore=2' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'hw.gpu.enabled=yes' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'hw.gpu.mode=swiftshader_indirect' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'disk.dataPartition.size=2048M' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'hw.lcd.density=240' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'hw.lcd.height=800' >> ~/.android/avd/test-emulator.avd/config.ini
-          echo 'hw.lcd.width=480' >> ~/.android/avd/test-emulator.avd/config.ini
+          # Start Android emulator container
+          docker run -d --network appium-network --name android-container \
+            -e EMULATOR_DEVICE="Samsung Galaxy S10" \
+            -e WEB_VNC=true \
+            -e APPIUM_HOST=appium-server \
+            -e APPIUM_PORT=4723 \
+            -e CONNECT_TO_GRID=false \
+            -e RELAXED_SECURITY=true \
+            -v $(pwd)/app:/app \
+            budtmo/docker-android:emulator_11.0
           
-          # List available AVDs
-          $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd
-      
-      - name: Start emulator and run tests
-        run: |
-          # Verify emulator binary exists
-          ls -la $ANDROID_HOME/emulator/
+          # Wait for the emulator to boot completely
+          echo "Waiting for Android emulator to boot (this may take a few minutes)..."
+          timeout 300 bash -c 'until docker logs android-container 2>&1 | grep -q "Boot completed"; do sleep 10; echo "Still waiting for emulator boot..."; done'
           
-          # Print system architecture for debugging
-          echo "System architecture:"
-          uname -a
+          # Show container logs for debugging
+          echo "Android container logs:"
+          docker logs android-container
           
-          # Start emulator in background with more basic options first
-          echo "Starting emulator in background"
-          nohup $ANDROID_HOME/emulator/emulator \
-            -avd test-emulator \
-            -no-window \
-            -no-audio \
-            -no-boot-anim \
-            -gpu swiftshader \
-            -no-snapshot \
-            -verbose &
+          echo "Appium server logs:"
+          docker logs appium-server
           
-          # Wait for emulator to boot with a more robust approach
-          echo "Waiting for emulator to boot..."
-          max_attempts=30
-          attempt=0
-          boot_completed=false
-          
-          while [ $attempt -lt $max_attempts ] && [ "$boot_completed" = false ]; do
-            attempt=$((attempt+1))
-            echo "Boot attempt $attempt of $max_attempts"
-            
-            # Check if adb is available
-            $ANDROID_HOME/platform-tools/adb devices
-            
-            # Check if device is online
-            if $ANDROID_HOME/platform-tools/adb devices | grep -q emulator; then
-              echo "Emulator detected in device list"
+          # Run the test in a container with access to both Appium and Android
+          docker run --network appium-network --name rust-pilot-test \
+            -v $(pwd):/workspace \
+            -w /workspace \
+            -e APPIUM_HOST=appium-server \
+            -e APPIUM_PORT=4723 \
+            -e ANDROID_DEVICE=android-container \
+            rust:slim \
+            /bin/bash -c '
+              # Install required dependencies
+              apt-get update && apt-get install -y curl
               
-              # Check boot_completed property
-              boot_prop=$($ANDROID_HOME/platform-tools/adb shell getprop sys.boot_completed 2>&1 || echo "")
-              if [ "$boot_prop" = "1" ]; then
-                echo "Emulator boot completed!"
-                boot_completed=true
-                break
-              fi
-            fi
-            
-            # Wait before next attempt
-            sleep 10
-          done
-          
-          if [ "$boot_completed" = false ]; then
-            echo "Emulator failed to boot after $max_attempts attempts"
-            exit 1
-          fi
-          
-          # Show emulator status
-          $ANDROID_HOME/platform-tools/adb devices
-          $ANDROID_HOME/platform-tools/adb shell getprop
-          
-          # Run the test
-          echo "Running RustPilot test..."
-          ./target/release/rust_pilot ./showcase-wikipedia-android/wikipedia.android.caps.json ./showcase-wikipedia-android/run-test.yml
+              # Run the test
+              echo "Running RustPilot test..."
+              ./target/release/rust_pilot \
+                ./showcase-wikipedia-android/wikipedia.android.caps.json \
+                ./showcase-wikipedia-android/run-test.yml
+            '
       
       # Archive test reports and logs as part of the workflow summary
       - name: Archive test artifacts
