@@ -66,7 +66,17 @@ jobs:
           
           # Install required Android SDK components
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-28" "build-tools;30.0.3" "system-images;android-28;default;x86_64"
+          echo "Installing Android SDK components..."
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose \
+            "platform-tools" \
+            "platforms;android-28" \
+            "build-tools;30.0.3" \
+            "system-images;android-28;default;x86_64" \
+            "emulator"
+          
+          # Verify installation
+          echo "Verifying installed packages:"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed
       
       - name: Install Appium
         run: |
@@ -95,6 +105,18 @@ jobs:
       
       - name: Create and configure AVD
         run: |
+          # Verify emulator is installed
+          if [ ! -d "$ANDROID_HOME/emulator" ]; then
+            echo "Emulator directory not found, installing emulator package"
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose "emulator"
+          fi
+          
+          # Verify system image is installed
+          if [ ! -d "$ANDROID_HOME/system-images/android-28/default/x86_64" ]; then
+            echo "System image not found, installing system image"
+            $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --verbose "system-images;android-28;default;x86_64"
+          fi
+          
           echo "Creating AVD with optimized settings"
           echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
             --name test-emulator \
@@ -118,20 +140,19 @@ jobs:
       
       - name: Start emulator and run tests
         run: |
-          # Start emulator in background
+          # Verify emulator binary exists
+          ls -la $ANDROID_HOME/emulator/
+          
+          # Start emulator in background with more basic options first
           echo "Starting emulator in background"
           nohup $ANDROID_HOME/emulator/emulator \
             -avd test-emulator \
             -no-window \
             -no-audio \
             -no-boot-anim \
-            -gpu swiftshader_indirect \
+            -gpu swiftshader \
             -no-snapshot \
-            -memory 2048 \
-            -accel on \
-            -cores 2 \
-            -skin 480x800 \
-            -qemu -m 2048 &
+            -verbose &
           
           # Wait for emulator to boot with a more robust approach
           echo "Waiting for emulator to boot..."
