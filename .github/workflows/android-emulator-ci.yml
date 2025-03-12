@@ -20,11 +20,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -46,7 +46,27 @@ jobs:
         run: cargo build --release
       
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+        run: |
+          echo "Installing Android SDK components manually"
+          export ANDROID_HOME=$HOME/android-sdk
+          mkdir -p $ANDROID_HOME
+          
+          # Download and install command line tools
+          CMDLINE_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-mac-9477386_latest.zip"
+          curl -L $CMDLINE_TOOLS_URL -o cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d $ANDROID_HOME
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
+          mv $ANDROID_HOME/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/ || true
+          rm -rf cmdline-tools.zip
+          
+          # Set up environment variables
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          
+          # Install required Android SDK components
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-28" "build-tools;30.0.3" "system-images;android-28;default;x86_64"
       
       - name: Install Appium
         run: |
