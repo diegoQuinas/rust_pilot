@@ -147,12 +147,11 @@ pub async fn execute_android_steps(
                         ));
                     } else {
                         sp.stop_with_symbol(&format!(
-                            "{} Can't find text: {}, tying with description",
+                            "{} Can't find text: {}, trying with description",
                             info_tag(),
                             string
                         ));
-                        let spinner =
-                            start_spinner(format!("Tapping on description: {}", string));
+                        let spinner = start_spinner(format!("Tapping on description: {}", string));
                         let selector_description = AndroidElementSelector::Description {
                             description: string.clone(),
                         };
@@ -263,4 +262,3 @@ pub async fn execute_android_steps(
     }
     (steps_count, report)
 }
-
