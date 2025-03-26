@@ -1,6 +1,6 @@
 {
   "platformName": "android",
-  "appium:app": "./app/app-dev-release.apk",
+  "appium:app": "./app/co-jumbo.apk",
   "platformVersion": "10",
   "appium:automationName": "UiAutomator2",
   "appium:fullReset": true,

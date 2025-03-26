@@ -1,4 +1,5 @@
 /target
-/app
+/app/app-dev-release.apk
+/app/co-jumbo.apk
 /reports
 error_screenshot.png

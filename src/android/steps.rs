@@ -18,7 +18,7 @@ pub async fn execute_android_steps(
     let mut report =
         "### Android Steps\n| Description | State | Observation | \n |----|----|----|\n"
             .to_string();
-    let steps_count = steps.len() as usize;
+    let steps_count = steps.len();
     for step in steps {
         match step {
             Step::Swipe { swipe } => {
@@ -54,8 +54,7 @@ pub async fn execute_android_steps(
                     Ok(_) => {}
                     Err(err) => {
                         sp.stop_with_symbol(&format!("{} Error swiping: {:?}", error_tag(), err));
-                        error_take_screenshot(&client).await;
-                        process::exit(1);
+                        error_take_screenshot(client).await;                        process::exit(1);
                     }
                 }
 
@@ -75,8 +74,7 @@ pub async fn execute_android_steps(
                             error_tag(),
                             err
                         ));
-                        error_take_screenshot(&client).await;
-                        process::exit(1);
+                        error_take_screenshot(client).await;                        process::exit(1);
                     }
                 };
                 let is_visible = element.is_displayed().await.unwrap();
@@ -111,7 +109,7 @@ pub async fn execute_android_steps(
                         error_tag(),
                         assertNotVisible.clone()
                     ));
-                    error_take_screenshot(&client).await;
+                    error_take_screenshot(client).await;
                     process::exit(1);
                 };
                 sp.stop_with_symbol(&format!(
@@ -147,12 +145,11 @@ pub async fn execute_android_steps(
                         ));
                     } else {
                         sp.stop_with_symbol(&format!(
-                            "{} Can't find text: {}, tying with description",
+                            "{} Can't find text: {}, trying with description",
                             info_tag(),
                             string
                         ));
-                        let spinner =
-                            start_spinner(format!("Tapping on description: {}", string));
+                        let spinner = start_spinner(format!("Tapping on description: {}", string));
                         let selector_description = AndroidElementSelector::Description {
                             description: string.clone(),
                         };
@@ -182,8 +179,7 @@ pub async fn execute_android_steps(
                                 error_tag(),
                                 string
                             ));
-                            error_take_screenshot(&client).await;
-                            process::exit(1);
+                            error_take_screenshot(client).await;                            process::exit(1);
                         }
                     }
                 }
@@ -263,4 +259,3 @@ pub async fn execute_android_steps(
     }
     (steps_count, report)
 }
-

@@ -6,8 +6,9 @@ tags:
 - launchApp:
     clearState: true
 #- runFlow: "onboarding/main.yml"
-- tapOn: RUT o Email
+- tapOn: Correo
 - inputText: "testingapp123456@yopmail.com"
+- tapOn: "Continuar"
 - tapOn: Contraseña
 - inputText: "Test1234"
 - tapOn: "Iniciar sesión"
