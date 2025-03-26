@@ -7,8 +7,9 @@ tags:
     clearState: true
 #- runFlow: "onboarding/main.yml"
 - tapOn: 
-    hint: RUT o Email
+    hint: Correo
 - inputText: "testingapp123456@yopmail.com"
+- tapOn: "Continuar"
 - tapOn: 
     hint: Contraseña
 - inputText: "Test1234"

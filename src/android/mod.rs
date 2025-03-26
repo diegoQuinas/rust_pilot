@@ -173,10 +173,10 @@ pub async fn launch_android_main(
         .expect("No app path found")
         .as_str()
         .unwrap();
-    caps.app(&app_path);
+    caps.app(app_path);
 
     caps.platform_version(
-        &capabilities
+        capabilities
             .get("platformVersion")
             .expect("No platform version found")
             .as_str()

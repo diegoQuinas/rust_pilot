@@ -18,7 +18,7 @@ pub async fn execute_android_steps(
     let mut report =
         "### Android Steps\n| Description | State | Observation | \n |----|----|----|\n"
             .to_string();
-    let steps_count = steps.len() as usize;
+    let steps_count = steps.len();
     for step in steps {
         match step {
             Step::Swipe { swipe } => {
@@ -54,8 +54,7 @@ pub async fn execute_android_steps(
                     Ok(_) => {}
                     Err(err) => {
                         sp.stop_with_symbol(&format!("{} Error swiping: {:?}", error_tag(), err));
-                        error_take_screenshot(&client).await;
-                        process::exit(1);
+                        error_take_screenshot(client).await;                        process::exit(1);
                     }
                 }
 
@@ -75,8 +74,7 @@ pub async fn execute_android_steps(
                             error_tag(),
                             err
                         ));
-                        error_take_screenshot(&client).await;
-                        process::exit(1);
+                        error_take_screenshot(client).await;                        process::exit(1);
                     }
                 };
                 let is_visible = element.is_displayed().await.unwrap();
@@ -111,7 +109,7 @@ pub async fn execute_android_steps(
                         error_tag(),
                         assertNotVisible.clone()
                     ));
-                    error_take_screenshot(&client).await;
+                    error_take_screenshot(client).await;
                     process::exit(1);
                 };
                 sp.stop_with_symbol(&format!(
@@ -181,8 +179,7 @@ pub async fn execute_android_steps(
                                 error_tag(),
                                 string
                             ));
-                            error_take_screenshot(&client).await;
-                            process::exit(1);
+                            error_take_screenshot(client).await;                            process::exit(1);
                         }
                     }
                 }
