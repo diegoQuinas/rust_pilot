@@ -1,32 +1,42 @@
-name: Maestro Version Check
+name: Run Maestro Tests
+
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [main]
+  pull_request:
+
 jobs:
-  maestro-version-check:
+  maestro-test:
     runs-on: ubuntu-latest
-    container:
-      image: alpine:latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Install Dependencies
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Create AVD and start emulator
         run: |
-          apk add --no-cache openjdk8 curl bash zip
-          echo "Dependencies installed successfully."
-      - name: Download and Install Maestro
+          echo "y" | sdkmanager "system-images;android-30;google_apis;x86_64"
+          echo "no" | avdmanager create avd -n test -k "system-images;android-30;google_apis;x86_64" --device "pixel"
+          $ANDROID_HOME/emulator/emulator -avd test -no-window -no-audio -no-snapshot &
+          adb wait-for-device
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+        timeout-minutes: 10
+
+      - name: Install Maestro
         run: |
-          echo "Downloading Maestro..."
-          curl -L https://get.maestro.mobile.dev -o install_maestro.sh
-          chmod +x install_maestro.sh
-          ./install_maestro.sh || (echo "Failed to install Maestro" && exit 1)
-      - name: Add Maestro to PATH
-        run: |
-          export PATH="$PATH:$HOME/.maestro/bin"
-          echo "PATH updated to include Maestro: $PATH"
-      - name: Verify Maestro Installation and List Files
-        run: |
-          export PATH="$PATH:$HOME/.maestro/bin"
-          maestro --version
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Run Maestro Tests
+
+        run: maestro test ./test-co-jumbo/main-maestro.yml
