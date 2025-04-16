@@ -1,0 +1,32 @@
+name: Maestro Version Check
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  maestro-version-check:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: |
+          apk add --no-cache openjdk8 curl bash zip
+          echo "Dependencies installed successfully."
+      - name: Download and Install Maestro
+        run: |
+          echo "Downloading Maestro..."
+          curl -L https://get.maestro.mobile.dev -o install_maestro.sh
+          chmod +x install_maestro.sh
+          ./install_maestro.sh || (echo "Failed to install Maestro" && exit 1)
+      - name: Add Maestro to PATH
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+          echo "PATH updated to include Maestro: $PATH"
+      - name: Verify Maestro Installation and List Files
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+          maestro --version
